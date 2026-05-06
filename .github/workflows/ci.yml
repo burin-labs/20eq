@@ -40,3 +40,20 @@ jobs:
 
       - name: harn package check
         run: harn package check
+
+  # Roll-up job whose display name matches the org-level required status
+  # check ("CI status"). Add new check jobs to `needs` as they're added so
+  # this stays an honest gate.
+  status:
+    name: CI status
+    runs-on: ubuntu-latest
+    needs: [harn]
+    if: always()
+    steps:
+      - name: Verify required jobs succeeded
+        run: |
+          if [[ "${{ needs.harn.result }}" != "success" ]]; then
+            echo "harn job result: ${{ needs.harn.result }}"
+            exit 1
+          fi
+          echo "all required jobs passed"
