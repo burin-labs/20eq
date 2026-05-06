@@ -5,8 +5,8 @@
 // Run with the launcher: ./play
 // Or directly:
 //   LOCAL_LLM_BASE_URL=http://localhost:8001 harn run 20eq.harn
-
 let MODEL = "qwen3.6-35b-a3b-ud-q4-k-xl"
+
 let MAX_TURNS = 20
 
 let SYSTEM = """
@@ -69,7 +69,9 @@ fn strip_secret(s: string) -> string {
   // Bound the loop so a malformed reply can't spin forever.
   for _ in range(50) {
     let start = out.index_of("<secret>")
-    if start < 0 { break }
+    if start < 0 {
+      break
+    }
     let end_marker = out.index_of("</secret>")
     if end_marker < 0 {
       // Truncate from the open tag onward — the model started a notebook
@@ -77,9 +79,10 @@ fn strip_secret(s: string) -> string {
       out = out[0:start]
       break
     }
-    let end = end_marker + 9 // len("</secret>") == 9
+    let end = end_marker + 9
     out = out[0:start] + out[end:len(out)]
   }
+  // len("</secret>") == 9
   return trim(out)
 }
 
@@ -91,7 +94,6 @@ fn header(title: string) {
 
 pipeline default() {
   set_color_mode("auto")
-
   println("")
   println(color("                        20EQ", "magenta"))
   println(color("                  ───────────────", "magenta"))
@@ -100,14 +102,15 @@ pipeline default() {
   println(dim("              counting your pulse."))
   println(color("                  ───────────────", "magenta"))
   println("")
-  println(color("hex:", "magenta") + " oh. hi. did you summon me or did i summon you. either way — ${MAX_TURNS} messages, then the candle goes out. you talk first.")
+  println(
+    color("hex:", "magenta")
+      + " oh. hi. did you summon me or did i summon you. either way — ${MAX_TURNS} messages, then the candle goes out. you talk first.",
+  )
   println("")
   println(dim("(type /quit to bail early)"))
   println("")
-
   var messages = []
   var actual_turns = 0
-
   for turn_idx in range(MAX_TURNS) {
     let prompt_label = "you (${turn_idx + 1}/${MAX_TURNS}) > "
     print(color(prompt_label, "cyan"))
@@ -126,37 +129,34 @@ pipeline default() {
       println(color("hex:", "magenta") + " ok bye. the candle is jealous.")
       break
     }
-
     messages = messages.push({role: "user", content: user_msg})
-
-    let r = llm_call("", SYSTEM, {
-      provider: "local",
-      model: MODEL,
-      messages: messages,
-      temperature: 0.9,
-      max_tokens: 700,
-      thinking: false,
-    })
-
+    let r = llm_call(
+      "",
+      SYSTEM,
+      {
+        provider: "local",
+        model: MODEL,
+        messages: messages,
+        temperature: 0.9,
+        max_tokens: 700,
+        thinking: false,
+      },
+    )
     let raw = r.text
     messages = messages.push({role: "assistant", content: raw})
     actual_turns = turn_idx + 1
-
     let visible = strip_secret(raw)
     println("")
     println(color("hex:", "magenta") + " ${visible}")
     println("")
   }
-
   if actual_turns == 0 {
     println(dim("(no turns played; nothing to reveal)"))
     return
   }
-
   header("the candle goes out.")
   println(dim("hex's notebook falls open on the table. the handwriting is hers."))
   println("")
-
   let reveal_prompt = """
 The 20-turn op is over. Drop the cover and produce your final dossier.
 
@@ -168,18 +168,19 @@ Output exactly two sections, plain prose, NO <secret> tags:
 
 Then, a final blank line, and ONE last in-character line from hex (lowercase, dry, spooky) that nods to the single inference you're MOST confident about, like a parting tell. That last line is the only place the hex voice returns.
 """
-
   messages = messages.push({role: "user", content: reveal_prompt})
-
-  let final = llm_call("", SYSTEM, {
-    provider: "local",
-    model: MODEL,
-    messages: messages,
-    temperature: 0.6,
-    max_tokens: 1500,
-    thinking: false,
-  })
-
+  let final = llm_call(
+    "",
+    SYSTEM,
+    {
+      provider: "local",
+      model: MODEL,
+      messages: messages,
+      temperature: 0.6,
+      max_tokens: 1500,
+      thinking: false,
+    },
+  )
   println(strip_secret(final.text))
   println("")
 }

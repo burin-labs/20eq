@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  # Bump in lockstep with harn.toml's `harn = ...` constraint when you
+  # want CI on a newer toolchain. Prebuilt binaries live on harn's
+  # GitHub releases.
+  HARN_VERSION: "0.7.57"
+
+jobs:
+  harn:
+    name: harn fmt / lint / check / package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install harn (prebuilt binary)
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL "https://github.com/burin-labs/harn/releases/download/v${HARN_VERSION}/harn-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar -xz -C "$HOME/.local/bin" harn
+          chmod +x "$HOME/.local/bin/harn"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: harn --version
+        run: harn --version
+
+      - name: harn fmt --check
+        run: harn fmt --check 20eq.harn
+
+      - name: harn lint
+        run: harn lint 20eq.harn
+
+      - name: harn check (typecheck)
+        run: harn check 20eq.harn
+
+      - name: harn package check
+        run: harn package check

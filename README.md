@@ -1,5 +1,7 @@
 # 20EQ
 
+[![CI](https://github.com/burin-labs/20eq/actions/workflows/ci.yml/badge.svg)](https://github.com/burin-labs/20eq/actions/workflows/ci.yml)
+
 A Halloween-themed command-line chatbot game in the spirit of *20 Questions* — except the spooky teen-coded character on the other side of the void is secretly running an information-theoretic profile of you over ~20 turns. When the candle goes out, she drops the act and reveals her dossier.
 
 Written in [Harn](https://harnlang.com).
@@ -41,7 +43,21 @@ Type `/quit` to bail early; otherwise the candle goes out on its own after 20 tu
 - `20eq.harn` — the game (system prompt, chat loop, secret-stripping, reveal pass)
 - `harn.toml` — Harn package manifest
 - `play` — launcher; pre-flights the LLM endpoint and runs harn
+- `.githooks/pre-commit` — auto-format + verify on commit
+- `.github/workflows/ci.yml` — CI: `harn fmt`/`lint`/`check`/`package check`
 - `LICENSE`, `README.md`, `.gitignore` — boilerplate
+
+## Develop
+
+After cloning, activate the pre-commit hook (one-time per clone):
+
+```sh
+./scripts/install-hooks.sh
+```
+
+That points git at `.githooks/`, which on every commit runs `harn fmt` + `harn lint --fix` over staged `.harn` files (re-staging them), then verifies `harn fmt --check`, `harn check`, `harn lint`, and `harn package check` are all clean. The CI workflow runs the same verifications against PRs.
+
+The hook silently skips itself if `harn` isn't on PATH, so you won't get blocked on a clone where you haven't installed the toolchain yet.
 
 ## License
 

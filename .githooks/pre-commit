@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Pre-commit checks for 20EQ. Auto-fixes formatting on staged .harn files
+# and re-stages them, then verifies fmt/check/lint/package-check are clean.
+#
+# Activate by pointing git at this directory once, per repo clone:
+#   git config core.hooksPath .githooks
+# (or run `./scripts/install-hooks.sh`).
+set -euo pipefail
+
+if ! command -v harn >/dev/null 2>&1; then
+  echo "[pre-commit] harn not on PATH — skipping checks." >&2
+  echo "             install with: cargo install harn-cli" >&2
+  exit 0
+fi
+
+# Auto-fix any staged .harn files, then re-stage them. Note: this stages
+# any unstaged edits in those files too — if you've been holding back a
+# WIP edit in the same file, stash it before committing.
+staged_harn=()
+while IFS= read -r f; do
+  staged_harn+=("$f")
+done < <(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.harn$' || true)
+
+if (( ${#staged_harn[@]} > 0 )); then
+  echo "[pre-commit] formatting + autofixing: ${staged_harn[*]}"
+  harn fmt "${staged_harn[@]}"
+  harn lint --fix "${staged_harn[@]}"
+  git add -- "${staged_harn[@]}"
+fi
+
+# Final verification: same checks CI runs.
+echo "[pre-commit] harn fmt --check"
+harn fmt --check 20eq.harn
+echo "[pre-commit] harn check"
+harn check 20eq.harn
+echo "[pre-commit] harn lint"
+harn lint 20eq.harn
+echo "[pre-commit] harn package check"
+harn package check >/dev/null
+echo "[pre-commit] ok"
