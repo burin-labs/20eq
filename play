@@ -1,34 +1,35 @@
 #!/usr/bin/env bash
-# Launcher for 20EQ — points harn at the warm llama.cpp server on :8001.
+# Launcher for 20EQ. Runs the Harn toolchain (expected on PATH from
+# `cargo install harn-cli`) against a local OpenAI-compatible chat server.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-HARN_REPO="${HARN_REPO:-$HOME/projects/harn}"
+
+# Locate harn. Honor $HARN_BIN for hackers running a local source build.
+HARN_BIN="${HARN_BIN:-$(command -v harn || true)}"
+if [[ -z "$HARN_BIN" ]]; then
+  cat >&2 <<'EOF'
+20eq: the `harn` binary is not on PATH.
+
+Install Harn from crates.io:
+
+    cargo install harn-cli
+
+This puts a `harn` binary in ~/.cargo/bin/. Then re-run ./play.
+
+(If you have a local Harn source build, point HARN_BIN at it instead:
+    HARN_BIN=~/projects/harn/target/debug/harn ./play )
+EOF
+  exit 127
+fi
 
 export LOCAL_LLM_BASE_URL="${LOCAL_LLM_BASE_URL:-http://localhost:8001}"
 
 # Pre-flight: make sure something OpenAI-compat is actually listening.
 if ! curl -fsS "${LOCAL_LLM_BASE_URL}/v1/models" >/dev/null 2>&1; then
-  echo "warning: nothing answering at ${LOCAL_LLM_BASE_URL}/v1/models" >&2
-  echo "         start your llama.cpp server (or override LOCAL_LLM_BASE_URL)." >&2
+  echo "20eq: nothing answering at ${LOCAL_LLM_BASE_URL}/v1/models" >&2
+  echo "      start your local LLM server, or override LOCAL_LLM_BASE_URL." >&2
   exit 1
-fi
-
-cd "$HARN_REPO"
-
-# Pin a stable target dir under this project. Harn's repo `.cargo/config.toml`
-# points target-dir at /tmp/harn-devsetup-<pid>/, which gets reaped between
-# shells — so without this override every launch silently rebuilds harn
-# from scratch and looks like the chat box is hanging.
-export CARGO_TARGET_DIR="$HERE/.harn-target"
-HARN_BIN="$CARGO_TARGET_DIR/debug/harn"
-
-# Build loud (so first-run compile progress is visible) only if the binary
-# is missing or older than the harn sources. Otherwise exec the cached
-# binary directly so the chat box launches instantly.
-if [[ ! -x "$HARN_BIN" ]] || [[ -n "$(find "$HARN_REPO/crates" -name '*.rs' -newer "$HARN_BIN" -print -quit 2>/dev/null)" ]]; then
-  echo "(building harn — first run or harn sources changed; this can take a few minutes...)" >&2
-  cargo build --bin harn
 fi
 
 exec "$HARN_BIN" run "$HERE/20eq.harn"

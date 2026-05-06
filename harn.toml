@@ -1,0 +1,15 @@
+[package]
+name = "twenty-eq"
+version = "0.1.0"
+description = "Halloween-themed 20-Questions CLI chatbot. The detective on the other side of the void is profiling you."
+license = "MIT"
+repository = "https://github.com/burin-labs/20eq"
+harn = ">=0.7,<0.8"
+
+# 20EQ is an app, not a library. The single export points at the
+# entrypoint script so `harn package check` recognises this as a
+# well-formed Harn project; consumers run it via `harn run 20eq.harn`.
+[exports]
+main = "20eq.harn"
+
+[dependencies]

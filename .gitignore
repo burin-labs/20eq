@@ -1,9 +1,11 @@
-# Local cargo build cache for the harn binary the launcher invokes.
-.harn-target/
-
 # Harn runtime working dirs (created by `harn run`).
 .harn-runs/
 .harn/
+
+# Cargo build cache, only present if you point HARN_BIN at a local
+# source build of harn that uses this dir for its target.
+.harn-target/
+target/
 
 # macOS
 .DS_Store
