@@ -9,6 +9,8 @@ let MODEL = "qwen3.6-35b-a3b-ud-q4-k-xl"
 
 let MAX_TURNS = 20
 
+let SECRET_OPEN = "<secret>"
+
 let SYSTEM = """
 You are HEX — a snarky, kohl-eyed, terminally-online twenty-something who has been pulled into someone's chat box at 3:33am via what feels like a cursed séance.
 
@@ -68,7 +70,7 @@ fn strip_secret(s: string) -> string {
   var out = s
   // Bound the loop so a malformed reply can't spin forever.
   for _ in range(50) {
-    let start = out.index_of("<secret>")
+    let start = out.index_of(SECRET_OPEN)
     if start < 0 {
       break
     }
@@ -86,51 +88,48 @@ fn strip_secret(s: string) -> string {
   return trim(out)
 }
 
+fn blank_rebuke(turn_idx: int) -> string {
+  let lines = [
+    "nice try. the candle does not count silence.",
+    "blank offering rejected. put a thought in the bowl.",
+    "the void heard that. it was unimpressed.",
+    "nope. ellipses are my job, not yours.",
+    "the question stays put until you feed it words.",
+  ]
+  return lines[turn_idx % len(lines)]
+}
+
+fn typing_hint(turn_idx: int) -> string {
+  let lines = [
+    "the candle leans toward the screen",
+    "something under the keys is listening",
+    "hex is rummaging around in the static",
+    "the cursor holds its breath",
+    "the void is chewing on that",
+  ]
+  return lines[turn_idx % len(lines)]
+}
+
+fn print_candle() {
+  println(color("                         )", "yellow"))
+  println(color("                        (", "yellow"))
+  println(color("                       .-.", "yellow"))
+  println(color("                       | |", "yellow"))
+  println(color("                       | |", "yellow"))
+  println(color("                      _|_|_", "magenta"))
+  println(dim("                    .-'''''-."))
+}
+
 fn header(title: string) {
   println("")
   println(color("─── ${title} ───", "yellow"))
   println("")
 }
 
-pipeline default() {
-  set_color_mode("auto")
-  println("")
-  println(color("                        20EQ", "magenta"))
-  println(color("                  ───────────────", "magenta"))
-  println(dim("              the chat box flickers on."))
-  println(dim("              the cursor blinks like it's"))
-  println(dim("              counting your pulse."))
-  println(color("                  ───────────────", "magenta"))
-  println("")
-  println(
-    color("hex:", "magenta")
-      + " oh. hi. did you summon me or did i summon you. either way — ${MAX_TURNS} messages, then the candle goes out. you talk first.",
-  )
-  println("")
-  println(dim("(type /quit to bail early)"))
-  println("")
-  var messages = []
-  var actual_turns = 0
-  for turn_idx in range(MAX_TURNS) {
-    let prompt_label = "you (${turn_idx + 1}/${MAX_TURNS}) > "
-    print(color(prompt_label, "cyan"))
-    let line = read_line()
-    if line == nil {
-      println("")
-      println(dim("[the connection drops]"))
-      break
-    }
-    let user_msg = trim(line)
-    if len(user_msg) == 0 {
-      continue
-    }
-    if user_msg == "/quit" || user_msg == "/exit" {
-      println("")
-      println(color("hex:", "magenta") + " ok bye. the candle is jealous.")
-      break
-    }
-    messages = messages.push({role: "user", content: user_msg})
-    let r = llm_call(
+fn stream_hex_reply(messages: list, turn_idx: int) -> string {
+  let events = channel("hex-stream-${turn_idx}")
+  let _worker = spawn {
+    let chunks = llm_stream_call(
       "",
       SYSTEM,
       {
@@ -142,12 +141,130 @@ pipeline default() {
         thinking: false,
       },
     )
-    let raw = r.text
-    messages = messages.push({role: "assistant", content: raw})
-    actual_turns = turn_idx + 1
-    let visible = strip_secret(raw)
+    for chunk in chunks {
+      send(events, {done: false, chunk: chunk})
+    }
+    send(events, {done: true})
+  }
+  println("")
+  print(color("hex:", "magenta") + " " + dim(typing_hint(turn_idx)))
+  var raw = ""
+  var pending = ""
+  var secret_open = false
+  var emitted = false
+  var done = false
+  while !done {
+    select {
+      event from events {
+        if event.done {
+          done = true
+        } else {
+          let delta = event.chunk.delta ?? ""
+          raw = raw + delta
+          if !secret_open {
+            pending = pending + delta
+            let start = pending.index_of(SECRET_OPEN)
+            if start >= 0 {
+              let safe = pending[0:start]
+              if len(safe) > 0 {
+                if !emitted {
+                  println("")
+                  print(color("hex:", "magenta") + " ")
+                  emitted = true
+                }
+                print(safe)
+              }
+              secret_open = true
+              pending = ""
+            } else {
+              if len(pending) > 7 {
+                let emit_len = len(pending) - 7
+                let safe = pending[0:emit_len]
+                if len(safe) > 0 {
+                  if !emitted {
+                    println("")
+                    print(color("hex:", "magenta") + " ")
+                    emitted = true
+                  }
+                  print(safe)
+                }
+                pending = pending[emit_len:len(pending)]
+              }
+            }
+          }
+        }
+      }
+      timeout 600ms {
+        if !emitted {
+          print(dim("."))
+        }
+      }
+    }
+  }
+  if !secret_open && len(pending) > 0 && !SECRET_OPEN.starts_with(pending) {
+    if !emitted {
+      println("")
+      print(color("hex:", "magenta") + " ")
+      emitted = true
+    }
+    print(pending)
+  }
+  if !emitted {
     println("")
-    println(color("hex:", "magenta") + " ${visible}")
+    println(color("hex:", "magenta") + " " + dim("[the candle gutters; no answer comes]"))
+  } else {
+    println("")
+  }
+  return raw
+}
+
+pipeline default() {
+  set_color_mode("auto")
+  println("")
+  print_candle()
+  println("")
+  println(color("                        20EQ", "magenta"))
+  println(color("                  ───────────────", "magenta"))
+  println(dim("              the chat box flickers on."))
+  println(dim("              the cursor blinks like it's"))
+  println(dim("              counting your pulse."))
+  println(dim("              every answer burns the wick."))
+  println(color("                  ───────────────", "magenta"))
+  println("")
+  println(
+    color("hex:", "magenta")
+      + " oh. hi. did you summon me or did i summon you. either way — ${MAX_TURNS} messages, then the candle goes out. you talk first.",
+  )
+  println("")
+  println(dim("(type /quit to bail early)"))
+  println("")
+  var messages = []
+  var actual_turns = 0
+  while actual_turns < MAX_TURNS {
+    let prompt_label = "you (${actual_turns + 1}/${MAX_TURNS}) > "
+    print(color(prompt_label, "cyan"))
+    let line = read_line()
+    if line == nil {
+      println("")
+      println(dim("[the connection drops]"))
+      break
+    }
+    let user_msg = trim(line)
+    if len(user_msg) == 0 {
+      println("")
+      println(color("hex:", "magenta") + " " + blank_rebuke(actual_turns))
+      println("")
+      continue
+    }
+    if user_msg == "/quit" || user_msg == "/exit" {
+      println("")
+      println(color("hex:", "magenta") + " ok bye. the candle is jealous.")
+      break
+    }
+    messages = messages.push({role: "user", content: user_msg})
+    let raw = stream_hex_reply(messages, actual_turns)
+    messages = messages.push({role: "assistant", content: raw})
+    actual_turns = actual_turns + 1
     println("")
   }
   if actual_turns == 0 {
