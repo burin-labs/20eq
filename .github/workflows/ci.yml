@@ -10,6 +10,13 @@ env:
   # want CI on a newer toolchain. Prebuilt binaries live on harn's
   # GitHub releases.
   HARN_VERSION: "0.7.57"
+  # SHA-256 of harn-x86_64-unknown-linux-gnu.tar.gz for the version above.
+  # Bump together with HARN_VERSION; recompute with e.g.
+  #   curl -fsSL "https://github.com/burin-labs/harn/releases/download/v${VER}/harn-x86_64-unknown-linux-gnu.tar.gz" \
+  #     | sha256sum
+  # Once burin-labs/harn publishes `.sha256` sidecars next to each asset
+  # we can swap this inline pin for a sidecar download + `sha256sum -c`.
+  HARN_SHA256: "a07c80dd8be32dba363fa7eb261ddd3b9f2eb5e830ccf055931e35a66dba4872"
 
 jobs:
   harn:
@@ -18,11 +25,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install harn (prebuilt binary)
+      - name: Install harn (prebuilt binary, SHA256-verified)
         run: |
+          set -euo pipefail
           mkdir -p "$HOME/.local/bin"
-          curl -fsSL "https://github.com/burin-labs/harn/releases/download/v${HARN_VERSION}/harn-x86_64-unknown-linux-gnu.tar.gz" \
-            | tar -xz -C "$HOME/.local/bin" harn
+          workdir="$(mktemp -d)"
+          cd "$workdir"
+
+          asset="harn-x86_64-unknown-linux-gnu.tar.gz"
+          url="https://github.com/burin-labs/harn/releases/download/v${HARN_VERSION}/${asset}"
+
+          curl -fsSL --retry 3 --retry-delay 2 -o "$asset" "$url"
+
+          # Verify against the pinned SHA-256 above before extracting. If
+          # this fails, either HARN_VERSION was bumped without updating
+          # HARN_SHA256, or the published asset was tampered with.
+          printf '%s  %s\n' "$HARN_SHA256" "$asset" | sha256sum -c -
+
+          tar -xzf "$asset" -C "$HOME/.local/bin" harn
           chmod +x "$HOME/.local/bin/harn"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
