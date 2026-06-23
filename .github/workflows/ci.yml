@@ -5,19 +5,6 @@ on:
     branches: [main]
   pull_request:
 
-env:
-  # Bump in lockstep with harn.toml's `harn = ...` constraint when you
-  # want CI on a newer toolchain. Prebuilt binaries live on harn's
-  # GitHub releases.
-  HARN_VERSION: "0.7.57"
-  # SHA-256 of harn-x86_64-unknown-linux-gnu.tar.gz for the version above.
-  # Bump together with HARN_VERSION; recompute with e.g.
-  #   curl -fsSL "https://github.com/burin-labs/harn/releases/download/v${VER}/harn-x86_64-unknown-linux-gnu.tar.gz" \
-  #     | sha256sum
-  # Once burin-labs/harn publishes `.sha256` sidecars next to each asset
-  # we can swap this inline pin for a sidecar download + `sha256sum -c`.
-  HARN_SHA256: "a07c80dd8be32dba363fa7eb261ddd3b9f2eb5e830ccf055931e35a66dba4872"
-
 jobs:
   harn:
     name: harn fmt / lint / check / package
@@ -32,15 +19,29 @@ jobs:
           workdir="$(mktemp -d)"
           cd "$workdir"
 
+          version="$(tr -d '[:space:]' < "$GITHUB_WORKSPACE/.harn-version")"
+          version="${version#v}"
           asset="harn-x86_64-unknown-linux-gnu.tar.gz"
-          url="https://github.com/burin-labs/harn/releases/download/v${HARN_VERSION}/${asset}"
+          release_url="https://github.com/burin-labs/harn/releases/download/v${version}"
 
-          curl -fsSL --retry 3 --retry-delay 2 -o "$asset" "$url"
+          download() {
+            local url="$1"
+            local output="$2"
+            for attempt in $(seq 1 60); do
+              if curl -fsSL --retry 3 --retry-delay 2 -o "$output" "$url"; then
+                return 0
+              fi
+              if [ "$attempt" -eq 60 ]; then
+                return 1
+              fi
+              sleep 10
+            done
+          }
 
-          # Verify against the pinned SHA-256 above before extracting. If
-          # this fails, either HARN_VERSION was bumped without updating
-          # HARN_SHA256, or the published asset was tampered with.
-          printf '%s  %s\n' "$HARN_SHA256" "$asset" | sha256sum -c -
+          download "${release_url}/${asset}" "$asset"
+          download "${release_url}/SHA256SUMS" SHA256SUMS
+
+          grep "  ${asset}$" SHA256SUMS | sha256sum -c -
 
           tar -xzf "$asset" -C "$HOME/.local/bin" harn
           chmod +x "$HOME/.local/bin/harn"
