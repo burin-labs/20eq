@@ -5,11 +5,20 @@
 // Run with the launcher: ./play
 // Or directly:
 //   LOCAL_LLM_BASE_URL=http://localhost:8001 harn run 20eq.harn
+import {
+  agent_private_stream_delta,
+  agent_private_stream_finish,
+  agent_private_stream_state,
+  agent_private_text_filter,
+} from "std/agent/stream"
+
 let MODEL = "qwen3.6-35b-a3b-ud-q4-k-xl"
 
 let MAX_TURNS = 20
 
 let SECRET_OPEN = "<secret>"
+
+let SECRET_CLOSE = "</secret>"
 
 let SYSTEM = """
 You are HEX — a snarky, kohl-eyed, terminally-online twenty-something who has been pulled into someone's chat box at 3:33am via what feels like a cursed séance.
@@ -67,25 +76,7 @@ GO.
 """
 
 fn strip_secret(s: string) -> string {
-  var out = s
-  // Bound the loop so a malformed reply can't spin forever.
-  for _ in range(50) {
-    let start = out.index_of(SECRET_OPEN)
-    if start < 0 {
-      break
-    }
-    let end_marker = out.index_of("</secret>")
-    if end_marker < 0 {
-      // Truncate from the open tag onward — the model started a notebook
-      // but never closed it; don't leak it to the user.
-      out = out[0:start]
-      break
-    }
-    let end = end_marker + 9
-    out = out[0:start] + out[end:len(out)]
-  }
-  // len("</secret>") == 9
-  return trim(out)
+  return trim(agent_private_text_filter(s, {open_tag: SECRET_OPEN, close_tag: SECRET_CLOSE}))
 }
 
 fn blank_rebuke(turn_idx: int) -> string {
@@ -110,23 +101,23 @@ fn typing_hint(turn_idx: int) -> string {
   return lines[turn_idx % len(lines)]
 }
 
-fn print_candle() {
-  println(color("                         )", "yellow"))
-  println(color("                        (", "yellow"))
-  println(color("                       .-.", "yellow"))
-  println(color("                       | |", "yellow"))
-  println(color("                       | |", "yellow"))
-  println(color("                      _|_|_", "magenta"))
-  println(dim("                    .-'''''-."))
+fn print_candle(harness: Harness) {
+  harness.stdio.println(color("                         )", "yellow"))
+  harness.stdio.println(color("                        (", "yellow"))
+  harness.stdio.println(color("                       .-.", "yellow"))
+  harness.stdio.println(color("                       | |", "yellow"))
+  harness.stdio.println(color("                       | |", "yellow"))
+  harness.stdio.println(color("                      _|_|_", "magenta"))
+  harness.stdio.println(dim("                    .-'''''-."))
 }
 
-fn header(title: string) {
-  println("")
-  println(color("─── ${title} ───", "yellow"))
-  println("")
+fn header(harness: Harness, title: string) {
+  harness.stdio.println("")
+  harness.stdio.println(color("─── ${title} ───", "yellow"))
+  harness.stdio.println("")
 }
 
-fn stream_hex_reply(messages: list, turn_idx: int) -> string {
+fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
   let events = channel("hex-stream-${turn_idx}")
   let _worker = spawn {
     let chunks = llm_stream_call(
@@ -146,11 +137,9 @@ fn stream_hex_reply(messages: list, turn_idx: int) -> string {
     }
     send(events, {done: true})
   }
-  println("")
-  print(color("hex:", "magenta") + " " + dim(typing_hint(turn_idx)))
-  var raw = ""
-  var pending = ""
-  var secret_open = false
+  harness.stdio.println("")
+  harness.stdio.print(color("hex:", "magenta") + " " + dim(typing_hint(turn_idx)))
+  var stream_state = agent_private_stream_state({open_tag: SECRET_OPEN, close_tag: SECRET_CLOSE})
   var emitted = false
   var done = false
   while !done {
@@ -160,120 +149,104 @@ fn stream_hex_reply(messages: list, turn_idx: int) -> string {
           done = true
         } else {
           let delta = event.chunk.delta ?? ""
-          raw = raw + delta
-          if !secret_open {
-            pending = pending + delta
-            let start = pending.index_of(SECRET_OPEN)
-            if start >= 0 {
-              let safe = pending[0:start]
-              if len(safe) > 0 {
-                if !emitted {
-                  println("")
-                  print(color("hex:", "magenta") + " ")
-                  emitted = true
-                }
-                print(safe)
-              }
-              secret_open = true
-              pending = ""
-            } else {
-              if len(pending) > 7 {
-                let emit_len = len(pending) - 7
-                let safe = pending[0:emit_len]
-                if len(safe) > 0 {
-                  if !emitted {
-                    println("")
-                    print(color("hex:", "magenta") + " ")
-                    emitted = true
-                  }
-                  print(safe)
-                }
-                pending = pending[emit_len:len(pending)]
-              }
+          let filtered = agent_private_stream_delta(stream_state, delta)
+          stream_state = filtered.state
+          let safe = filtered.visible_delta ?? ""
+          if len(safe) > 0 {
+            if !emitted {
+              harness.stdio.println("")
+              harness.stdio.print(color("hex:", "magenta") + " ")
+              emitted = true
             }
+            harness.stdio.print(safe)
           }
         }
       }
       timeout 600ms {
         if !emitted {
-          print(dim("."))
+          harness.stdio.print(dim("."))
         }
       }
     }
   }
-  if !secret_open && len(pending) > 0 && !SECRET_OPEN.starts_with(pending) {
+  let finished = agent_private_stream_finish(stream_state)
+  let final_delta = finished.visible_delta ?? ""
+  if len(final_delta) > 0 {
     if !emitted {
-      println("")
-      print(color("hex:", "magenta") + " ")
+      harness.stdio.println("")
+      harness.stdio.print(color("hex:", "magenta") + " ")
       emitted = true
     }
-    print(pending)
+    harness.stdio.print(final_delta)
   }
   if !emitted {
-    println("")
-    println(color("hex:", "magenta") + " " + dim("[the candle gutters; no answer comes]"))
+    harness.stdio.println("")
+    harness.stdio.println(color("hex:", "magenta") + " " + dim("[the candle gutters; no answer comes]"))
   } else {
-    println("")
+    harness.stdio.println("")
   }
-  return raw
+  return finished.text
 }
 
 pipeline default() {
   set_color_mode("auto")
-  println("")
-  print_candle()
-  println("")
-  println(color("                        20EQ", "magenta"))
-  println(color("                  ───────────────", "magenta"))
-  println(dim("              the chat box flickers on."))
-  println(dim("              the cursor blinks like it's"))
-  println(dim("              counting your pulse."))
-  println(dim("              every answer burns the wick."))
-  println(color("                  ───────────────", "magenta"))
-  println("")
-  println(
+  harness.stdio.println("")
+  print_candle(harness)
+  harness.stdio.println("")
+  harness.stdio.println(color("                        20EQ", "magenta"))
+  harness.stdio
+    .println(color("                  ───────────────", "magenta"))
+  harness.stdio.println(dim("              the chat box flickers on."))
+  harness.stdio.println(dim("              the cursor blinks like it's"))
+  harness.stdio.println(dim("              counting your pulse."))
+  harness.stdio.println(dim("              every answer burns the wick."))
+  harness.stdio
+    .println(color("                  ───────────────", "magenta"))
+  harness.stdio.println("")
+  harness.stdio
+    .println(
     color("hex:", "magenta")
       + " oh. hi. did you summon me or did i summon you. either way — ${MAX_TURNS} messages, then the candle goes out. you talk first.",
   )
-  println("")
-  println(dim("(type /quit to bail early)"))
-  println("")
+  harness.stdio.println("")
+  harness.stdio.println(dim("(type /quit to bail early)"))
+  harness.stdio.println("")
   var messages = []
   var actual_turns = 0
   while actual_turns < MAX_TURNS {
     let prompt_label = "you (${actual_turns + 1}/${MAX_TURNS}) > "
-    print(color(prompt_label, "cyan"))
-    let line = read_line()
+    harness.stdio.print(color(prompt_label, "cyan"))
+    let line = harness.stdio.read_line()
     if line == nil {
-      println("")
-      println(dim("[the connection drops]"))
+      harness.stdio.println("")
+      harness.stdio.println(dim("[the connection drops]"))
       break
     }
     let user_msg = trim(line)
     if len(user_msg) == 0 {
-      println("")
-      println(color("hex:", "magenta") + " " + blank_rebuke(actual_turns))
-      println("")
+      harness.stdio.println("")
+      harness.stdio.println(color("hex:", "magenta") + " " + blank_rebuke(actual_turns))
+      harness.stdio.println("")
       continue
     }
     if user_msg == "/quit" || user_msg == "/exit" {
-      println("")
-      println(color("hex:", "magenta") + " ok bye. the candle is jealous.")
+      harness.stdio.println("")
+      harness.stdio.println(color("hex:", "magenta") + " ok bye. the candle is jealous.")
       break
     }
     messages = messages.push({role: "user", content: user_msg})
-    let raw = stream_hex_reply(messages, actual_turns)
+    let raw = stream_hex_reply(harness, messages, actual_turns)
     messages = messages.push({role: "assistant", content: raw})
     actual_turns = actual_turns + 1
-    println("")
+    harness.stdio.println("")
   }
   if actual_turns == 0 {
-    println(dim("(no turns played; nothing to reveal)"))
+    harness.stdio.println(dim("(no turns played; nothing to reveal)"))
     return
   }
-  header("the candle goes out.")
-  println(dim("hex's notebook falls open on the table. the handwriting is hers."))
-  println("")
+  header(harness, "the candle goes out.")
+  harness.stdio.println(dim("hex's notebook falls open on the table. the handwriting is hers."))
+  harness.stdio.println("")
   let reveal_prompt = """
 The 20-turn op is over. Drop the cover and produce your final dossier.
 
@@ -298,6 +271,6 @@ Then, a final blank line, and ONE last in-character line from hex (lowercase, dr
       thinking: false,
     },
   )
-  println(strip_secret(final.text))
-  println("")
+  harness.stdio.println(strip_secret(final.text))
+  harness.stdio.println("")
 }
