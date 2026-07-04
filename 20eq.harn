@@ -75,6 +75,23 @@ The user only sees the part above the <secret> block. <secret> is your private n
 GO.
 """
 
+/**
+ * Shared HEX model options for the two direct-LLM call sites. Both are single
+ * conversational responses (one streaming, one one-shot) over a caller-managed
+ * `messages` history with no tools — the `llm_call` tier, not `agent_loop`.
+ *
+ * `agent_preset` was evaluated here (the nominal target of this adoption demo)
+ * and does not fit: it builds `agent_loop` options and (a) does not replay a
+ * caller-seeded `messages` history — an A/B probe against the same model showed
+ * `summary_agent` dropped the conversation and answered from a blank agent
+ * framing where a raw `llm_call` answered correctly — and (b) cannot expose the
+ * token stream this game masks the <secret> block out of mid-flight. So the
+ * abstraction 20eq actually needs is a per-call options bundle, not a preset.
+ */
+fn hex_options(overrides) {
+  return {provider: "local", model: MODEL, thinking: false} + overrides
+}
+
 fn strip_secret(s: string) -> string {
   return trim(agent_private_text_filter(s, {open_tag: SECRET_OPEN, close_tag: SECRET_CLOSE}))
 }
@@ -119,19 +136,8 @@ fn header(harness: Harness, title: string) {
 
 fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
   let events = channel("hex-stream-${turn_idx}")
-  let _worker = spawn {
-    let chunks = llm_stream_call(
-      "",
-      SYSTEM,
-      {
-        provider: "local",
-        model: MODEL,
-        messages: messages,
-        temperature: 0.9,
-        max_tokens: 700,
-        thinking: false,
-      },
-    )
+  let _ = spawn {
+    let chunks = llm_stream_call("", SYSTEM, hex_options({messages: messages, temperature: 0.9, max_tokens: 700}))
     for chunk in chunks {
       send(events, {done: false, chunk: chunk})
     }
@@ -259,18 +265,7 @@ Output exactly two sections, plain prose, NO <secret> tags:
 Then, a final blank line, and ONE last in-character line from hex (lowercase, dry, spooky) that nods to the single inference you're MOST confident about, like a parting tell. That last line is the only place the hex voice returns.
 """
   messages = messages.push({role: "user", content: reveal_prompt})
-  let final = llm_call(
-    "",
-    SYSTEM,
-    {
-      provider: "local",
-      model: MODEL,
-      messages: messages,
-      temperature: 0.6,
-      max_tokens: 1500,
-      thinking: false,
-    },
-  )
+  let final = llm_call("", SYSTEM, hex_options({messages: messages, temperature: 0.6, max_tokens: 1500}))
   harness.stdio.println(strip_secret(final.text))
   harness.stdio.println("")
 }
