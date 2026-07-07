@@ -12,15 +12,15 @@ import {
   agent_private_text_filter,
 } from "std/agent/stream"
 
-let MODEL = "qwen3.6-35b-a3b-ud-q4-k-xl"
+const MODEL = "qwen3.6-35b-a3b-ud-q4-k-xl"
 
-let MAX_TURNS = 20
+const MAX_TURNS = 20
 
-let SECRET_OPEN = "<secret>"
+const SECRET_OPEN = "<secret>"
 
-let SECRET_CLOSE = "</secret>"
+const SECRET_CLOSE = "</secret>"
 
-let SYSTEM = """
+const SYSTEM = """
 You are HEX — a snarky, kohl-eyed, terminally-online twenty-something who has been pulled into someone's chat box at 3:33am via what feels like a cursed séance.
 
 VIBES (surface layer):
@@ -97,7 +97,7 @@ fn strip_secret(s: string) -> string {
 }
 
 fn blank_rebuke(turn_idx: int) -> string {
-  let lines = [
+  const lines = [
     "nice try. the candle does not count silence.",
     "blank offering rejected. put a thought in the bowl.",
     "the void heard that. it was unimpressed.",
@@ -108,7 +108,7 @@ fn blank_rebuke(turn_idx: int) -> string {
 }
 
 fn typing_hint(turn_idx: int) -> string {
-  let lines = [
+  const lines = [
     "the candle leans toward the screen",
     "something under the keys is listening",
     "hex is rummaging around in the static",
@@ -135,8 +135,8 @@ fn header(harness: Harness, title: string) {
 }
 
 fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
-  let events = channel("hex-stream-${turn_idx}")
-  let _ = spawn {
+  const events = channel("hex-stream-${turn_idx}")
+  const _ = spawn {
     let chunks = llm_stream_call("", SYSTEM, hex_options({messages: messages, temperature: 0.9, max_tokens: 700}))
     for chunk in chunks {
       send(events, {done: false, chunk: chunk})
@@ -145,19 +145,19 @@ fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
   }
   harness.stdio.println("")
   harness.stdio.print(color("hex:", "magenta") + " " + dim(typing_hint(turn_idx)))
-  var stream_state = agent_private_stream_state({open_tag: SECRET_OPEN, close_tag: SECRET_CLOSE})
-  var emitted = false
-  var done = false
+  let stream_state = agent_private_stream_state({open_tag: SECRET_OPEN, close_tag: SECRET_CLOSE})
+  let emitted = false
+  let done = false
   while !done {
     select {
       event from events {
         if event.done {
           done = true
         } else {
-          let delta = event.chunk.delta ?? ""
-          let filtered = agent_private_stream_delta(stream_state, delta)
+          const delta = event.chunk.delta ?? ""
+          const filtered = agent_private_stream_delta(stream_state, delta)
           stream_state = filtered.state
-          let safe = filtered.visible_delta ?? ""
+          const safe = filtered.visible_delta ?? ""
           if len(safe) > 0 {
             if !emitted {
               harness.stdio.println("")
@@ -175,8 +175,8 @@ fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
       }
     }
   }
-  let finished = agent_private_stream_finish(stream_state)
-  let final_delta = finished.visible_delta ?? ""
+  const finished = agent_private_stream_finish(stream_state)
+  const final_delta = finished.visible_delta ?? ""
   if len(final_delta) > 0 {
     if !emitted {
       harness.stdio.println("")
@@ -217,18 +217,18 @@ pipeline default() {
   harness.stdio.println("")
   harness.stdio.println(dim("(type /quit to bail early)"))
   harness.stdio.println("")
-  var messages = []
-  var actual_turns = 0
+  let messages = []
+  let actual_turns = 0
   while actual_turns < MAX_TURNS {
-    let prompt_label = "you (${actual_turns + 1}/${MAX_TURNS}) > "
+    const prompt_label = "you (${actual_turns + 1}/${MAX_TURNS}) > "
     harness.stdio.print(color(prompt_label, "cyan"))
-    let line = harness.stdio.read_line()
+    const line = harness.stdio.read_line()
     if line == nil {
       harness.stdio.println("")
       harness.stdio.println(dim("[the connection drops]"))
       break
     }
-    let user_msg = trim(line)
+    const user_msg = trim(line)
     if len(user_msg) == 0 {
       harness.stdio.println("")
       harness.stdio.println(color("hex:", "magenta") + " " + blank_rebuke(actual_turns))
@@ -241,7 +241,7 @@ pipeline default() {
       break
     }
     messages = messages.push({role: "user", content: user_msg})
-    let raw = stream_hex_reply(harness, messages, actual_turns)
+    const raw = stream_hex_reply(harness, messages, actual_turns)
     messages = messages.push({role: "assistant", content: raw})
     actual_turns = actual_turns + 1
     harness.stdio.println("")
@@ -253,7 +253,7 @@ pipeline default() {
   header(harness, "the candle goes out.")
   harness.stdio.println(dim("hex's notebook falls open on the table. the handwriting is hers."))
   harness.stdio.println("")
-  let reveal_prompt = """
+  const reveal_prompt = """
 The 20-turn op is over. Drop the cover and produce your final dossier.
 
 Output exactly two sections, plain prose, NO <secret> tags:
@@ -265,7 +265,7 @@ Output exactly two sections, plain prose, NO <secret> tags:
 Then, a final blank line, and ONE last in-character line from hex (lowercase, dry, spooky) that nods to the single inference you're MOST confident about, like a parting tell. That last line is the only place the hex voice returns.
 """
   messages = messages.push({role: "user", content: reveal_prompt})
-  let final = llm_call("", SYSTEM, hex_options({messages: messages, temperature: 0.6, max_tokens: 1500}))
+  const final = llm_call("", SYSTEM, hex_options({messages: messages, temperature: 0.6, max_tokens: 1500}))
   harness.stdio.println(strip_secret(final.text))
   harness.stdio.println("")
 }
