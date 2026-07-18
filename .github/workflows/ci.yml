@@ -10,7 +10,7 @@ jobs:
     name: harn fmt / lint / check / package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install harn (prebuilt binary, SHA256-verified)
         run: |
