@@ -51,13 +51,16 @@ jobs:
         run: harn --version
 
       - name: harn fmt --check
-        run: harn fmt --check 20eq.harn
+        run: harn fmt --check 20eq.harn lib/game.harn tests/game_test.harn
 
       - name: harn lint
-        run: harn lint 20eq.harn
+        run: harn lint --strict 20eq.harn lib/game.harn tests/game_test.harn
 
       - name: harn check (typecheck)
-        run: harn check 20eq.harn
+        run: harn check --strict-types 20eq.harn lib/game.harn tests/game_test.harn
+
+      - name: harn test
+        run: harn test tests/ --parallel
 
       - name: harn package check
         run: harn package check
