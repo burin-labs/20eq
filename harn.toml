@@ -5,10 +5,8 @@ description = "Halloween-themed 20-Questions CLI chatbot. The detective on the o
 license = "MIT"
 repository = "https://github.com/burin-labs/20eq"
 harn = ">=0.10,<0.11"
+docs_url = "README.md"
 
-# 20EQ is an app, not a library. The single export points at the
-# entrypoint script so `harn package check` recognises this as a
-# well-formed Harn project; consumers run it via `harn run 20eq.harn`.
 [exports]
 main = "20eq.harn"
 

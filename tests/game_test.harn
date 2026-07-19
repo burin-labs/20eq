@@ -1,0 +1,61 @@
+import { agent_stream_call } from "std/agent/stream"
+import { assert_eq } from "std/testing"
+import {
+  MAX_TURNS,
+  blank_rebuke,
+  hex_options,
+  is_exit_command,
+  strip_secret,
+  turn_label,
+  typing_hint,
+} from "../lib/game.harn"
+
+pipeline test_private_notebook_never_reaches_visible_text(_task) {
+  assert_eq(strip_secret("visible\n<secret>private</secret>"), "visible")
+  assert_eq(strip_secret("visible\n<secret>unterminated"), "visible")
+  assert_eq(strip_secret("<secret>private</secret>visible"), "visible")
+}
+
+pipeline test_harn_stream_boundary_hides_private_notebook(_task) {
+  llm_mock({text: "hello from the void<secret>private notes</secret>"})
+  let visible = ""
+  const result = agent_stream_call(
+    "",
+    "",
+    {
+      provider: "mock",
+      private: {open_tag: "<secret>", close_tag: "</secret>"},
+      on_delta: { delta, _event, _state -> visible = visible + delta },
+    },
+  )
+  assert(result.ok)
+  assert_eq(visible, "hello from the void")
+  assert_eq(result.visible_text, visible)
+  assert_eq(result.text, "hello from the void<secret>private notes</secret>")
+}
+
+pipeline test_turn_copy_cycles_without_wall_clock_state(_task) {
+  assert_eq(blank_rebuke(0), blank_rebuke(5))
+  assert_eq(typing_hint(1), typing_hint(6))
+  assert(blank_rebuke(0) != blank_rebuke(1))
+}
+
+pipeline test_exit_commands_are_explicit(_task) {
+  assert(is_exit_command("/quit"))
+  assert(is_exit_command("/exit"))
+  assert(!is_exit_command("quit"))
+  assert(!is_exit_command("/QUIT"))
+}
+
+pipeline test_turn_labels_use_human_numbering(_task) {
+  assert_eq(turn_label(0), "you (1/${MAX_TURNS}) > ")
+  assert_eq(turn_label(MAX_TURNS - 1), "you (${MAX_TURNS}/${MAX_TURNS}) > ")
+}
+
+pipeline test_default_model_route_is_local(_task) {
+  const options = hex_options({temperature: 0.4})
+  assert_eq(options.provider, "local")
+  assert_eq(options.model, "qwen3.6-35b-a3b-ud-q4-k-xl")
+  assert_eq(options.thinking, false)
+  assert_eq(options.temperature, 0.4)
+}
