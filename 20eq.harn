@@ -137,7 +137,11 @@ fn header(harness: Harness, title: string) {
 fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
   const events = channel("hex-stream-${turn_idx}")
   const _ = spawn {
-    let chunks = llm_stream_call("", SYSTEM, hex_options({messages: messages, temperature: 0.9, max_tokens: 700}))
+    let chunks = llm_stream_call(
+      "",
+      SYSTEM,
+      hex_options({messages: messages, temperature: 0.9, max_tokens: 700}),
+    )
     for chunk in chunks {
       send(events, {done: false, chunk: chunk})
     }
@@ -187,7 +191,9 @@ fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
   }
   if !emitted {
     harness.stdio.println("")
-    harness.stdio.println(color("hex:", "magenta") + " " + dim("[the candle gutters; no answer comes]"))
+    harness.stdio.println(
+      color("hex:", "magenta") + " " + dim("[the candle gutters; no answer comes]"),
+    )
   } else {
     harness.stdio.println("")
   }
@@ -200,17 +206,14 @@ pipeline default() {
   print_candle(harness)
   harness.stdio.println("")
   harness.stdio.println(color("                        20EQ", "magenta"))
-  harness.stdio
-    .println(color("                  ───────────────", "magenta"))
+  harness.stdio.println(color("                  ───────────────", "magenta"))
   harness.stdio.println(dim("              the chat box flickers on."))
   harness.stdio.println(dim("              the cursor blinks like it's"))
   harness.stdio.println(dim("              counting your pulse."))
   harness.stdio.println(dim("              every answer burns the wick."))
-  harness.stdio
-    .println(color("                  ───────────────", "magenta"))
+  harness.stdio.println(color("                  ───────────────", "magenta"))
   harness.stdio.println("")
-  harness.stdio
-    .println(
+  harness.stdio.println(
     color("hex:", "magenta")
       + " oh. hi. did you summon me or did i summon you. either way — ${MAX_TURNS} messages, then the candle goes out. you talk first.",
   )
@@ -265,7 +268,11 @@ Output exactly two sections, plain prose, NO <secret> tags:
 Then, a final blank line, and ONE last in-character line from hex (lowercase, dry, spooky) that nods to the single inference you're MOST confident about, like a parting tell. That last line is the only place the hex voice returns.
 """
   messages = messages.push({role: "user", content: reveal_prompt})
-  const final = llm_call("", SYSTEM, hex_options({messages: messages, temperature: 0.6, max_tokens: 1500}))
+  const final = llm_call(
+    "",
+    SYSTEM,
+    hex_options({messages: messages, temperature: 0.6, max_tokens: 1500}),
+  )
   harness.stdio.println(strip_secret(final.text))
   harness.stdio.println("")
 }
