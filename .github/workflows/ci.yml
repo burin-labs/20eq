@@ -5,50 +5,27 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   harn:
     name: harn fmt / lint / check / package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Install harn (prebuilt binary, SHA256-verified)
-        run: |
-          set -euo pipefail
-          mkdir -p "$HOME/.local/bin"
-          workdir="$(mktemp -d)"
-          cd "$workdir"
-
-          version="$(tr -d '[:space:]' < "$GITHUB_WORKSPACE/.harn-version")"
-          version="${version#v}"
-          asset="harn-x86_64-unknown-linux-gnu.tar.gz"
-          release_url="https://github.com/burin-labs/harn/releases/download/v${version}"
-
-          download() {
-            local url="$1"
-            local output="$2"
-            for attempt in $(seq 1 60); do
-              if curl -fsSL --retry 3 --retry-delay 2 -o "$output" "$url"; then
-                return 0
-              fi
-              if [ "$attempt" -eq 60 ]; then
-                return 1
-              fi
-              sleep 10
-            done
-          }
-
-          download "${release_url}/${asset}" "$asset"
-          download "${release_url}/SHA256SUMS" SHA256SUMS
-
-          grep "  ${asset}$" SHA256SUMS | sha256sum -c -
-
-          tar -xzf "$asset" -C "$HOME/.local/bin" harn
-          chmod +x "$HOME/.local/bin/harn"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install pinned Harn
+        uses: burin-labs/harn/.github/actions/setup-harn@05e43962cdefae44a511e81942adeebc6fe47675
 
       - name: harn --version
         run: harn --version
+
+      - name: Install dependencies
+        run: harn install --locked
 
       - name: harn fmt --check
         run: harn fmt --check 20eq.harn lib/game.harn tests/game_test.harn
