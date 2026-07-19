@@ -104,7 +104,7 @@ fn blank_rebuke(turn_idx: int) -> string {
     "nope. ellipses are my job, not yours.",
     "the question stays put until you feed it words.",
   ]
-  return lines[turn_idx % len(lines)]
+  return lines[turn_idx % len(lines)] ?? ""
 }
 
 fn typing_hint(turn_idx: int) -> string {
@@ -115,7 +115,7 @@ fn typing_hint(turn_idx: int) -> string {
     "the cursor holds its breath",
     "the void is chewing on that",
   ]
-  return lines[turn_idx % len(lines)]
+  return lines[turn_idx % len(lines)] ?? ""
 }
 
 fn print_candle(harness: Harness) {
@@ -137,7 +137,7 @@ fn header(harness: Harness, title: string) {
 fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
   const events = channel("hex-stream-${turn_idx}")
   const _ = spawn {
-    let chunks = llm_stream_call(
+    const chunks = llm_stream_call(
       "",
       SYSTEM,
       hex_options({messages: messages, temperature: 0.9, max_tokens: 700}),
