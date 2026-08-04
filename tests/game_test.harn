@@ -16,10 +16,11 @@ pipeline test_private_notebook_never_reaches_visible_text(_task) {
   assert_eq(strip_secret("<secret>private</secret>visible"), "visible")
 }
 
-pipeline test_harn_stream_boundary_hides_private_notebook(_task) {
-  llm_mock({text: "hello from the void<secret>private notes</secret>"})
+pipeline test_harn_stream_boundary_hides_private_notebook(harness: Harness, _task) {
+  harness.llm.mock_enqueue({text: "hello from the void<secret>private notes</secret>"})
   let visible = ""
   const result = agent_stream_call(
+    harness.llm,
     "",
     "",
     {
@@ -52,8 +53,8 @@ pipeline test_turn_labels_use_human_numbering(_task) {
   assert_eq(turn_label(MAX_TURNS - 1), "you (${MAX_TURNS}/${MAX_TURNS}) > ")
 }
 
-pipeline test_default_model_route_is_local(_task) {
-  const options = hex_options({temperature: 0.4})
+pipeline test_default_model_route_is_local(harness: Harness, _task) {
+  const options = hex_options(harness.env, {temperature: 0.4})
   assert_eq(options.provider, "local")
   assert_eq(options.model, "qwen3.6-35b-a3b-ud-q4-k-xl")
   assert_eq(options.thinking, false)

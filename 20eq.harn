@@ -73,29 +73,33 @@ The user only sees the part above the <secret> block. <secret> is your private n
 GO.
 """
 
-fn print_candle(harness: Harness) {
-  harness.stdio.println(color("                         )", "yellow"))
-  harness.stdio.println(color("                        (", "yellow"))
-  harness.stdio.println(color("                       .-.", "yellow"))
-  harness.stdio.println(color("                       | |", "yellow"))
-  harness.stdio.println(color("                       | |", "yellow"))
-  harness.stdio.println(color("                      _|_|_", "magenta"))
-  harness.stdio.println(dim("                    .-'''''-."))
+fn print_candle(harness: HarnessStdio) {
+  harness.println(color("                         )", "yellow"))
+  harness.println(color("                        (", "yellow"))
+  harness.println(color("                       .-.", "yellow"))
+  harness.println(color("                       | |", "yellow"))
+  harness.println(color("                       | |", "yellow"))
+  harness.println(color("                      _|_|_", "magenta"))
+  harness.println(dim("                    .-'''''-."))
 }
 
-fn header(harness: Harness, title: string) {
-  harness.stdio.println("")
-  harness.stdio.println(color("─── ${title} ───", "yellow"))
-  harness.stdio.println("")
+fn header(harness: HarnessStdio, title: string) {
+  harness.println("")
+  harness.println(color("─── ${title} ───", "yellow"))
+  harness.println("")
 }
 
 fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
   harness.stdio.println("")
   harness.stdio.print(color("hex:", "magenta") + " " + dim(typing_hint(turn_idx)))
   let emitted = false
-  const call_options = hex_options({messages: messages, temperature: 0.9, max_tokens: 700})
+  const call_options = hex_options(
+    harness.env,
+    {messages: messages, temperature: 0.9, max_tokens: 700},
+  )
   const result = schema_expect(
     agent_stream_call(
+      harness.llm,
       "",
       SYSTEM,
       call_options
@@ -125,10 +129,10 @@ fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
 }
 
 /** Run one interactive 20EQ session in the current terminal. */
-pub pipeline default() {
-  set_color_mode("auto")
+pub pipeline default(harness: Harness) {
+  harness.term.set_color_mode("auto")
   harness.stdio.println("")
-  print_candle(harness)
+  print_candle(harness.stdio)
   harness.stdio.println("")
   harness.stdio.println(color("                        20EQ", "magenta"))
   harness.stdio.println(color("                  ───────────────", "magenta"))
@@ -177,7 +181,7 @@ pub pipeline default() {
     harness.stdio.println(dim("(no turns played; nothing to reveal)"))
     return
   }
-  header(harness, "the candle goes out.")
+  header(harness.stdio, "the candle goes out.")
   harness.stdio.println(dim("hex's notebook falls open on the table. the handwriting is hers."))
   harness.stdio.println("")
   const reveal_prompt = """
@@ -193,7 +197,11 @@ Then, a final blank line, and ONE last in-character line from hex (lowercase, dr
 """
   messages = messages.push({role: "user", content: reveal_prompt})
   const final = schema_expect(
-    llm_call("", SYSTEM, hex_options({messages: messages, temperature: 0.6, max_tokens: 1500})),
+    harness.llm.call(
+      "",
+      SYSTEM,
+      hex_options(harness.env, {messages: messages, temperature: 0.6, max_tokens: 1500}),
+    ),
     schema_of(TextResponse),
   )
   harness.stdio.println(strip_secret(final.text))
