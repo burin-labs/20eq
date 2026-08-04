@@ -73,20 +73,20 @@ The user only sees the part above the <secret> block. <secret> is your private n
 GO.
 """
 
-fn print_candle(harness: HarnessStdio) {
-  harness.println(color("                         )", "yellow"))
-  harness.println(color("                        (", "yellow"))
-  harness.println(color("                       .-.", "yellow"))
-  harness.println(color("                       | |", "yellow"))
-  harness.println(color("                       | |", "yellow"))
-  harness.println(color("                      _|_|_", "magenta"))
-  harness.println(dim("                    .-'''''-."))
+fn print_candle(stdio: HarnessStdio) {
+  stdio.println(color("                         )", "yellow"))
+  stdio.println(color("                        (", "yellow"))
+  stdio.println(color("                       .-.", "yellow"))
+  stdio.println(color("                       | |", "yellow"))
+  stdio.println(color("                       | |", "yellow"))
+  stdio.println(color("                      _|_|_", "magenta"))
+  stdio.println(dim("                    .-'''''-."))
 }
 
-fn header(harness: HarnessStdio, title: string) {
-  harness.println("")
-  harness.println(color("─── ${title} ───", "yellow"))
-  harness.println("")
+fn header(stdio: HarnessStdio, title: string) {
+  stdio.println("")
+  stdio.println(color("─── ${title} ───", "yellow"))
+  stdio.println("")
 }
 
 fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
