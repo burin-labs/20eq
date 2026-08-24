@@ -104,16 +104,16 @@ fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
       SYSTEM,
       call_options
         + {
-        private: {open_tag: SECRET_OPEN, close_tag: SECRET_CLOSE},
-        on_delta: { delta, _event, _state ->
-          if !emitted {
-            harness.stdio.println("")
-            harness.stdio.print(color("hex:", "magenta") + " ")
-            emitted = true
-          }
-          harness.stdio.print(delta)
+          private: {open_tag: SECRET_OPEN, close_tag: SECRET_CLOSE},
+          on_delta: { delta, _event, _state ->
+            if !emitted {
+              harness.stdio.println("")
+              harness.stdio.print(color("hex:", "magenta") + " ")
+              emitted = true
+            }
+            harness.stdio.print(delta)
+          },
         },
-      },
     ),
     schema_of(TextResponse),
   )
