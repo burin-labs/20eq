@@ -16,3 +16,13 @@
 - "Ship" means landed on main with required deploy and post-merge checks complete.
 
 <!-- END HARN SHARED AGENT CONTRACT -->
+
+<!-- Repository-specific guidance below. The fleet manages only the block above. -->
+
+## Pull request titles
+
+Title every pull request `[Area] Sentence case`, for example
+`[Game] End the round when the candle burns out early`. Common areas here are
+`Game`, `Prompts`, `CI`, and `Docs`. See
+[`CONTRIBUTING.md`](CONTRIBUTING.md) for the verification commands.
+
