@@ -129,7 +129,7 @@ fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
 }
 
 /** Run one interactive 20EQ session in the current terminal. */
-pub pipeline default(harness: Harness) {
+pub fn main(harness: Harness) {
   harness.term.set_color_mode("auto")
   harness.stdio.println("")
   print_candle(harness.stdio)
