@@ -12,6 +12,8 @@ pub type HexCallOptions = {
   max_tokens?: int,
 }
 
+type HexStreamResult = {ok: bool, text: string, error?: unknown}
+
 pub const MAX_TURNS = 20
 
 pub const SECRET_OPEN = "<secret>"
@@ -27,6 +29,14 @@ pub fn hex_options(env: HarnessEnv, overrides: HexCallOverrides = {}) -> HexCall
 
 pub fn strip_secret(text: string) -> string {
   return trim(agent_private_text_filter(text, {open_tag: SECRET_OPEN, close_tag: SECRET_CLOSE}))
+}
+
+pub fn expect_hex_stream_text(result: unknown) -> string {
+  const response = schema_expect(result, schema_of(HexStreamResult))
+  if !response.ok {
+    throw response.error ?? "streamed model call failed without an error"
+  }
+  return response.text
 }
 
 pub fn blank_rebuke(turn: int) -> string {

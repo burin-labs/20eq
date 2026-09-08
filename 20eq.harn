@@ -9,6 +9,7 @@ import {
   SECRET_CLOSE,
   SECRET_OPEN,
   blank_rebuke,
+  expect_hex_stream_text,
   hex_options,
   is_exit_command,
   strip_secret,
@@ -97,26 +98,24 @@ fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
     harness.env,
     {messages: messages, temperature: 0.9, max_tokens: 700},
   )
-  const result = schema_expect(
-    agent_stream_call(
-      harness.llm,
-      "",
-      SYSTEM,
-      call_options
-        + {
-          private: {open_tag: SECRET_OPEN, close_tag: SECRET_CLOSE},
-          on_delta: { delta, _event, _state ->
-            if !emitted {
-              harness.stdio.println("")
-              harness.stdio.print(color("hex:", "magenta") + " ")
-              emitted = true
-            }
-            harness.stdio.print(delta)
-          },
+  const result = agent_stream_call(
+    harness.llm,
+    "",
+    SYSTEM,
+    call_options
+      + {
+        private: {open_tag: SECRET_OPEN, close_tag: SECRET_CLOSE},
+        on_delta: { delta, _event, _state ->
+          if !emitted {
+            harness.stdio.println("")
+            harness.stdio.print(color("hex:", "magenta") + " ")
+            emitted = true
+          }
+          harness.stdio.print(delta)
         },
-    ),
-    schema_of(TextResponse),
+      },
   )
+  const text = expect_hex_stream_text(result)
   if !emitted {
     harness.stdio.println("")
     harness.stdio.println(
@@ -125,7 +124,7 @@ fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
   } else {
     harness.stdio.println("")
   }
-  return result.text
+  return text
 }
 
 /** Run one interactive 20EQ session in the current terminal. */
