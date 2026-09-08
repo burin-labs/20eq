@@ -3,6 +3,7 @@ import { assert_eq } from "std/testing"
 import {
   MAX_TURNS,
   blank_rebuke,
+  expect_hex_stream_text,
   hex_options,
   is_exit_command,
   strip_secret,
@@ -33,6 +34,25 @@ pipeline test_harn_stream_boundary_hides_private_notebook(harness: Harness) {
   assert_eq(visible, "hello from the void")
   assert_eq(result.visible_text, visible)
   assert_eq(result.text, "hello from the void<secret>private notes</secret>")
+}
+
+pipeline test_stream_failure_and_empty_success_are_distinct(harness: Harness) {
+  harness.llm.mock_enqueue(
+    {error: {category: "transient_network", message: "provider unavailable"}},
+  )
+  const failure = agent_stream_call(harness.llm, "", "", {provider: "mock"})
+  const failed = try {
+    expect_hex_stream_text(failure)
+  }
+  assert(is_err(failed))
+  const error = unwrap_err(failed)
+  assert_eq(error.category, "transient_network")
+  assert_eq(error.kind, "transient")
+  assert_eq(error.reason, "network_error")
+  assert_eq(error.message, "provider unavailable")
+  harness.llm.mock_enqueue({text: ""})
+  const empty = agent_stream_call(harness.llm, "", "", {provider: "mock"})
+  assert_eq(expect_hex_stream_text(empty), "")
 }
 
 pipeline test_turn_copy_cycles_without_wall_clock_state() {
