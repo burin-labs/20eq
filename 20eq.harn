@@ -170,9 +170,9 @@ pub fn main(harness: Harness) {
       harness.stdio.println(color("hex:", "magenta") + " ok bye. the candle is jealous.")
       break
     }
-    messages = messages.push({role: "user", content: user_msg})
+    messages.push({role: "user", content: user_msg})
     const raw = stream_hex_reply(harness, messages, actual_turns)
-    messages = messages.push({role: "assistant", content: raw})
+    messages.push({role: "assistant", content: raw})
     actual_turns = actual_turns + 1
     harness.stdio.println("")
   }
@@ -194,7 +194,7 @@ Output exactly two sections, plain prose, NO <secret> tags:
 
 Then, a final blank line, and ONE last in-character line from hex (lowercase, dry, spooky) that nods to the single inference you're MOST confident about, like a parting tell. That last line is the only place the hex voice returns.
 """
-  messages = messages.push({role: "user", content: reveal_prompt})
+  messages.push({role: "user", content: reveal_prompt})
   const final = schema_expect(
     harness.llm.call(
       "",
