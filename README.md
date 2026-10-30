@@ -6,6 +6,22 @@ A Halloween-themed command-line chatbot game in the spirit of *20 Questions* —
 
 Written in [Harn](https://harnlang.com).
 
+## Language
+
+The game supports English, Spanish, French, German, Brazilian Portuguese,
+Italian, Japanese, Korean, and Simplified Chinese. It uses `LC_ALL`,
+`LC_MESSAGES`, then `LANG`. Set `TWENTY_EQ_LOCALE` to override that choice:
+
+```sh
+TWENTY_EQ_LOCALE=ja harn run 20eq.harn
+```
+
+Locale codes are `en`, `es`, `fr`, `de`, `pt-BR`, `it`, `ja`, `ko`, and
+`zh-Hans`. POSIX locale names such as `fr_FR.UTF-8` work too. Unsupported
+languages use English. `/quit` and `/exit` stay the same in every language.
+Terminal text is translated locally; the model is instructed to use the chosen
+language for its dialogue and final reveal.
+
 ## Install
 
 You need two things on your machine:

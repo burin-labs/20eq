@@ -1,5 +1,6 @@
 import { agent_private_text_filter } from "std/agent/stream"
 import { model_from_env, parse_model_id } from "std/config"
+import { GameCopy, english_copy } from "./locale.harn"
 
 pub type HexCallOverrides = {messages?: list, temperature?: float, max_tokens?: int}
 
@@ -39,32 +40,18 @@ pub fn expect_hex_stream_text(result: unknown) -> string {
   return response.text
 }
 
-pub fn blank_rebuke(turn: int) -> string {
-  const lines = [
-    "nice try. the candle does not count silence.",
-    "blank offering rejected. put a thought in the bowl.",
-    "the void heard that. it was unimpressed.",
-    "nope. ellipses are my job, not yours.",
-    "the question stays put until you feed it words.",
-  ]
-  return lines[turn % len(lines)] ?? ""
+pub fn blank_rebuke(turn: int, copy: GameCopy = english_copy()) -> string {
+  return copy.blanks[turn % len(copy.blanks)] ?? ""
 }
 
-pub fn typing_hint(turn: int) -> string {
-  const lines = [
-    "the candle leans toward the screen",
-    "something under the keys is listening",
-    "hex is rummaging around in the static",
-    "the cursor holds its breath",
-    "the void is chewing on that",
-  ]
-  return lines[turn % len(lines)] ?? ""
+pub fn typing_hint(turn: int, copy: GameCopy = english_copy()) -> string {
+  return copy.hints[turn % len(copy.hints)] ?? ""
 }
 
 pub fn is_exit_command(text: string) -> bool {
   return text == "/quit" || text == "/exit"
 }
 
-pub fn turn_label(turn: int) -> string {
-  return "you (${turn + 1}/${MAX_TURNS}) > "
+pub fn turn_label(turn: int, copy: GameCopy = english_copy()) -> string {
+  return "${copy.you} (${turn + 1}/${MAX_TURNS}) > "
 }

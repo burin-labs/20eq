@@ -10,6 +10,7 @@ import {
   turn_label,
   typing_hint,
 } from "../lib/game.harn"
+import { game_copy } from "../lib/locale.harn"
 
 pipeline test_private_notebook_never_reaches_visible_text() {
   assert_eq(strip_secret("visible\n<secret>private</secret>"), "visible")
@@ -71,6 +72,26 @@ pipeline test_exit_commands_are_explicit() {
 pipeline test_turn_labels_use_human_numbering() {
   assert_eq(turn_label(0), "you (1/${MAX_TURNS}) > ")
   assert_eq(turn_label(MAX_TURNS - 1), "you (${MAX_TURNS}/${MAX_TURNS}) > ")
+}
+
+pipeline test_locale_catalogs_reach_every_terminal_copy_path() {
+  for locale in ["es", "fr", "de", "pt-BR", "it", "ja", "ko", "zh-Hans"] {
+    const copy = game_copy(locale)
+    assert_eq(copy.locale, locale)
+    assert_eq(len(copy.intro), 4)
+    assert_eq(len(copy.blanks), 5)
+    assert_eq(len(copy.hints), 5)
+    assert(copy.greeting != game_copy("en").greeting)
+    assert(copy.you != "you")
+    assert(contains(copy.quit_help, "/quit"))
+    assert_eq(blank_rebuke(0, copy), copy.blanks[0])
+    assert_eq(typing_hint(1, copy), copy.hints[1])
+    assert_eq(turn_label(0, copy), "${copy.you} (1/${MAX_TURNS}) > ")
+  }
+  assert_eq(game_copy("FR_fr.UTF-8@euro").locale, "fr")
+  assert_eq(game_copy("ja.UTF-8").locale, "ja")
+  assert_eq(game_copy("C").locale, "en")
+  assert_eq(game_copy("unsupported").locale, "en")
 }
 
 pipeline test_default_model_route_is_local(harness: Harness) {

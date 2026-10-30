@@ -16,6 +16,7 @@ import {
   turn_label,
   typing_hint,
 } from "./lib/game.harn"
+import { GameCopy, locale_from_env } from "./lib/locale.harn"
 
 type TextResponse = {text: string}
 
@@ -90,9 +91,13 @@ fn header(stdio: HarnessStdio, title: string) {
   stdio.println("")
 }
 
-fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
+fn localized_system(copy: GameCopy) -> string {
+  return "${SYSTEM}\nLanguage: write all visible replies and the final dossier in ${copy.language}. Keep the private <secret> tags and notebook field names unchanged. Preserve HEX's voice using natural local idioms."
+}
+
+fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int, copy: GameCopy) -> string {
   harness.stdio.println("")
-  harness.stdio.print(color("hex:", "magenta") + " " + dim(typing_hint(turn_idx)))
+  harness.stdio.print(color("hex:", "magenta") + " " + dim(typing_hint(turn_idx, copy)))
   let emitted = false
   const call_options = hex_options(
     harness.env,
@@ -101,7 +106,7 @@ fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
   const result = agent_stream_call(
     harness.llm,
     "",
-    SYSTEM,
+    localized_system(copy),
     call_options
       + {
         private: {open_tag: SECRET_OPEN, close_tag: SECRET_CLOSE},
@@ -118,9 +123,7 @@ fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
   const text = expect_hex_stream_text(result)
   if !emitted {
     harness.stdio.println("")
-    harness.stdio.println(
-      color("hex:", "magenta") + " " + dim("[the candle gutters; no answer comes]"),
-    )
+    harness.stdio.println(color("hex:", "magenta") + " " + dim(copy.empty))
   } else {
     harness.stdio.println("")
   }
@@ -129,59 +132,59 @@ fn stream_hex_reply(harness: Harness, messages: list, turn_idx: int) -> string {
 
 /** Run one interactive 20EQ session in the current terminal. */
 pub fn main(harness: Harness) {
+  const copy = locale_from_env(harness.env)
   harness.term.set_color_mode("auto")
   harness.stdio.println("")
   print_candle(harness.stdio)
   harness.stdio.println("")
   harness.stdio.println(color("                        20EQ", "magenta"))
   harness.stdio.println(color("                  ───────────────", "magenta"))
-  harness.stdio.println(dim("              the chat box flickers on."))
-  harness.stdio.println(dim("              the cursor blinks like it's"))
-  harness.stdio.println(dim("              counting your pulse."))
-  harness.stdio.println(dim("              every answer burns the wick."))
+  for line in copy.intro {
+    harness.stdio.println(dim("              ${line}"))
+  }
   harness.stdio.println(color("                  ───────────────", "magenta"))
   harness.stdio.println("")
   harness.stdio.println(
     color("hex:", "magenta")
-      + " oh. hi. did you summon me or did i summon you. either way — ${MAX_TURNS} messages, then the candle goes out. you talk first.",
+      + " ${copy.greeting}",
   )
   harness.stdio.println("")
-  harness.stdio.println(dim("(type /quit to bail early)"))
+  harness.stdio.println(dim(copy.quit_help))
   harness.stdio.println("")
-  let messages = []
+  const messages = []
   let actual_turns = 0
   while actual_turns < MAX_TURNS {
-    harness.stdio.print(color(turn_label(actual_turns), "cyan"))
+    harness.stdio.print(color(turn_label(actual_turns, copy), "cyan"))
     const line = harness.stdio.read_line()
     if line == nil {
       harness.stdio.println("")
-      harness.stdio.println(dim("[the connection drops]"))
+      harness.stdio.println(dim(copy.disconnected))
       break
     }
     const user_msg = trim(line)
     if len(user_msg) == 0 {
       harness.stdio.println("")
-      harness.stdio.println(color("hex:", "magenta") + " " + blank_rebuke(actual_turns))
+      harness.stdio.println(color("hex:", "magenta") + " " + blank_rebuke(actual_turns, copy))
       harness.stdio.println("")
       continue
     }
     if is_exit_command(user_msg) {
       harness.stdio.println("")
-      harness.stdio.println(color("hex:", "magenta") + " ok bye. the candle is jealous.")
+      harness.stdio.println(color("hex:", "magenta") + " ${copy.goodbye}")
       break
     }
     messages.push({role: "user", content: user_msg})
-    const raw = stream_hex_reply(harness, messages, actual_turns)
+    const raw = stream_hex_reply(harness, messages, actual_turns, copy)
     messages.push({role: "assistant", content: raw})
     actual_turns = actual_turns + 1
     harness.stdio.println("")
   }
   if actual_turns == 0 {
-    harness.stdio.println(dim("(no turns played; nothing to reveal)"))
+    harness.stdio.println(dim(copy.nothing))
     return
   }
-  header(harness.stdio, "the candle goes out.")
-  harness.stdio.println(dim("hex's notebook falls open on the table. the handwriting is hers."))
+  header(harness.stdio, copy.end_title)
+  harness.stdio.println(dim(copy.reveal))
   harness.stdio.println("")
   const reveal_prompt = """
 The 20-turn op is over. Drop the cover and produce your final dossier.
@@ -198,7 +201,7 @@ Then, a final blank line, and ONE last in-character line from hex (lowercase, dr
   const final = schema_expect(
     harness.llm.call(
       "",
-      SYSTEM,
+      localized_system(copy),
       hex_options(harness.env, {messages: messages, temperature: 0.6, max_tokens: 1500}),
     ),
     schema_of(TextResponse),

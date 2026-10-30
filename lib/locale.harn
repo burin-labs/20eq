@@ -1,0 +1,357 @@
+pub type GameCopy = {
+  locale: string,
+  language: string,
+  intro: list<string>,
+  greeting: string,
+  quit_help: string,
+  disconnected: string,
+  goodbye: string,
+  nothing: string,
+  end_title: string,
+  reveal: string,
+  empty: string,
+  you: string,
+  blanks: list<string>,
+  hints: list<string>,
+}
+
+pub fn english_copy() -> GameCopy {
+  return {
+    locale: "en",
+    language: "English",
+    intro: [
+      "the chat box flickers on.",
+      "the cursor blinks like it's",
+      "counting your pulse.",
+      "every answer burns the wick.",
+    ],
+    greeting:
+      "oh. hi. did you summon me or did i summon you. either way, 20 messages, then the candle goes out. you talk first.",
+    quit_help: "(type /quit to bail early)",
+    disconnected: "[the connection drops]",
+    goodbye: "ok bye. the candle is jealous.",
+    nothing: "(no turns played; nothing to reveal)",
+    end_title: "the candle goes out.",
+    reveal: "hex's notebook falls open on the table. the handwriting is hers.",
+    empty: "[the candle gutters; no answer comes]",
+    you: "you",
+    blanks: [
+      "nice try. the candle does not count silence.",
+      "blank offering rejected. put a thought in the bowl.",
+      "the void heard that. it was unimpressed.",
+      "nope. ellipses are my job, not yours.",
+      "the question stays put until you feed it words.",
+    ],
+    hints: [
+      "the candle leans toward the screen",
+      "something under the keys is listening",
+      "hex is rummaging around in the static",
+      "the cursor holds its breath",
+      "the void is chewing on that",
+    ],
+  }
+}
+
+/** Resolve a POSIX or BCP 47 locale once before the terminal loop. */
+pub fn game_copy(raw_locale: string) -> GameCopy {
+  const base = split(split(raw_locale, ".")[0] ?? "en", "@")[0] ?? "en"
+  const language = (split(replace(base, "_", "-"), "-")[0] ?? "en").lower()
+  if language == "es" {
+    return {
+      locale: "es",
+      language: "Spanish",
+      intro: [
+        "el chat se enciende a parpadeos.",
+        "el cursor parpadea como si",
+        "contara tus pulsaciones.",
+        "cada respuesta consume la mecha.",
+      ],
+      greeting:
+        "ah. hola. ¿me invocaste tú o te invoqué yo? en fin, 20 mensajes y se apaga la vela. tú empiezas.",
+      quit_help: "(escribe /quit para salir antes)",
+      disconnected: "[se corta la conexión]",
+      goodbye: "vale, adiós. la vela tiene celos.",
+      nothing: "(no hubo turnos; nada que revelar)",
+      end_title: "se apaga la vela.",
+      reveal: "el cuaderno de hex cae abierto sobre la mesa. es su letra.",
+      empty: "[la vela titila; no llega respuesta]",
+      you: "tú",
+      blanks: [
+        "buen intento. la vela no cuenta los silencios.",
+        "ofrenda vacía rechazada. pon una idea en el cuenco.",
+        "el vacío te ha oído. no se ha impresionado.",
+        "no. los puntos suspensivos son cosa mía.",
+        "la pregunta no se mueve hasta que le des palabras.",
+      ],
+      hints: [
+        "la vela se inclina hacia la pantalla",
+        "algo escucha bajo las teclas",
+        "hex rebusca entre las interferencias",
+        "el cursor contiene la respiración",
+        "el vacío está digiriendo eso",
+      ],
+    }
+  }
+  if language == "fr" {
+    return {
+      locale: "fr",
+      language: "French",
+      intro: [
+        "la fenêtre de chat s'allume en vacillant.",
+        "le curseur clignote comme s'il",
+        "comptait tes pulsations.",
+        "chaque réponse consume la mèche.",
+      ],
+      greeting:
+        "oh. salut. c'est toi qui m'as invoquée ou l'inverse ? bref, 20 messages, puis la bougie s'éteint. à toi de commencer.",
+      quit_help: "(tape /quit pour partir plus tôt)",
+      disconnected: "[la connexion se coupe]",
+      goodbye: "bon, salut. la bougie est jalouse.",
+      nothing: "(aucun tour joué ; rien à révéler)",
+      end_title: "la bougie s'éteint.",
+      reveal: "le carnet de hex s'ouvre sur la table. c'est bien son écriture.",
+      empty: "[la bougie vacille ; aucune réponse]",
+      you: "toi",
+      blanks: [
+        "bien essayé. la bougie ne compte pas les silences.",
+        "offrande vide refusée. mets une pensée dans le bol.",
+        "le vide t'a entendu. il n'est pas impressionné.",
+        "non. les points de suspension, c'est mon boulot.",
+        "la question reste là tant que tu ne lui donnes pas de mots.",
+      ],
+      hints: [
+        "la bougie se penche vers l'écran",
+        "quelque chose écoute sous les touches",
+        "hex fouille dans les parasites",
+        "le curseur retient son souffle",
+        "le vide est en train de digérer ça",
+      ],
+    }
+  }
+  if language == "de" {
+    return {
+      locale: "de",
+      language: "German",
+      intro: [
+        "das chatfenster flackert auf.",
+        "der cursor blinkt, als würde er",
+        "deinen puls zählen.",
+        "jede antwort verbrennt ein stück docht.",
+      ],
+      greeting:
+        "oh. hi. hast du mich beschworen oder ich dich? egal, 20 nachrichten, dann geht die kerze aus. du fängst an.",
+      quit_help: "(mit /quit steigst du früher aus)",
+      disconnected: "[die verbindung bricht ab]",
+      goodbye: "okay, tschüss. die kerze ist eifersüchtig.",
+      nothing: "(keine runde gespielt; nichts zu enthüllen)",
+      end_title: "die kerze geht aus.",
+      reveal: "hex' notizbuch fällt auf dem tisch auf. es ist ihre handschrift.",
+      empty: "[die kerze flackert; keine antwort]",
+      you: "du",
+      blanks: [
+        "netter versuch. schweigen zählt für die kerze nicht.",
+        "leere opfergabe abgelehnt. leg einen gedanken in die schale.",
+        "die leere hat dich gehört. sie ist unbeeindruckt.",
+        "nö. auslassungspunkte sind mein job.",
+        "die frage bleibt, bis du sie mit worten fütterst.",
+      ],
+      hints: [
+        "die kerze neigt sich zum bildschirm",
+        "etwas unter den tasten lauscht",
+        "hex wühlt im rauschen",
+        "der cursor hält die luft an",
+        "die leere kaut noch darauf herum",
+      ],
+    }
+  }
+  if language == "pt" {
+    return {
+      locale: "pt-BR",
+      language: "Brazilian Portuguese",
+      intro: [
+        "a janela do chat acende, piscando.",
+        "o cursor pisca como se estivesse",
+        "contando seu pulso.",
+        "cada resposta queima o pavio.",
+      ],
+      greeting:
+        "ah. oi. você me invocou ou fui eu? tanto faz, 20 mensagens e a vela apaga. você começa.",
+      quit_help: "(digite /quit para sair antes)",
+      disconnected: "[a conexão cai]",
+      goodbye: "tá, tchau. a vela ficou com ciúme.",
+      nothing: "(nenhuma rodada jogada; nada a revelar)",
+      end_title: "a vela apaga.",
+      reveal: "o caderno de hex cai aberto na mesa. a letra é dela.",
+      empty: "[a vela vacila; nenhuma resposta vem]",
+      you: "você",
+      blanks: [
+        "boa tentativa. a vela não conta silêncio.",
+        "oferenda vazia recusada. põe uma ideia na tigela.",
+        "o vazio ouviu. não ficou impressionado.",
+        "não. reticências são meu trabalho.",
+        "a pergunta fica até você alimentar ela com palavras.",
+      ],
+      hints: [
+        "a vela se inclina para a tela",
+        "algo sob as teclas está ouvindo",
+        "hex remexe na estática",
+        "o cursor prende a respiração",
+        "o vazio está digerindo isso",
+      ],
+    }
+  }
+  if language == "it" {
+    return {
+      locale: "it",
+      language: "Italian",
+      intro: [
+        "la chat si accende tremolando.",
+        "il cursore lampeggia come se",
+        "contasse i tuoi battiti.",
+        "ogni risposta consuma lo stoppino.",
+      ],
+      greeting:
+        "oh. ciao. mi hai evocata tu o ti ho evocato io? comunque, 20 messaggi e la candela si spegne. comincia tu.",
+      quit_help: "(scrivi /quit per uscire prima)",
+      disconnected: "[la connessione cade]",
+      goodbye: "ok, ciao. la candela è gelosa.",
+      nothing: "(nessun turno giocato; niente da rivelare)",
+      end_title: "la candela si spegne.",
+      reveal: "il taccuino di hex cade aperto sul tavolo. la calligrafia è sua.",
+      empty: "[la candela vacilla; nessuna risposta]",
+      you: "tu",
+      blanks: [
+        "bel tentativo. la candela non conta il silenzio.",
+        "offerta vuota respinta. metti un pensiero nella ciotola.",
+        "il vuoto ti ha sentito. non è colpito.",
+        "no. i puntini di sospensione sono il mio mestiere.",
+        "la domanda resta finché non la nutri di parole.",
+      ],
+      hints: [
+        "la candela si china verso lo schermo",
+        "qualcosa sotto i tasti ascolta",
+        "hex fruga tra le interferenze",
+        "il cursore trattiene il respiro",
+        "il vuoto ci sta rimuginando",
+      ],
+    }
+  }
+  if language == "ja" {
+    return {
+      locale: "ja",
+      language: "Japanese",
+      intro: [
+        "チャットの画面がちらりと灯る。",
+        "カーソルが点滅している。",
+        "きみの脈を数えるみたいに。",
+        "返事のたびに、芯が燃えていく。",
+      ],
+      greeting:
+        "あ。やあ。きみが私を呼んだの？それとも逆？まあ、20通でろうそくは消える。きみからどうぞ。",
+      quit_help: "（途中でやめるなら /quit）",
+      disconnected: "［接続が途切れた］",
+      goodbye: "じゃ、またね。ろうそくが妬いてる。",
+      nothing: "（まだ会話していない。明かすことはない）",
+      end_title: "ろうそくが消える。",
+      reveal: "hexの手帳が机の上で開く。彼女の筆跡だ。",
+      empty: "［炎が揺れる。返事はない］",
+      you: "きみ",
+      blanks: [
+        "そう来たか。沈黙は数に入らないよ。",
+        "空っぽのお供えは却下。考えをひとつ入れて。",
+        "虚無には聞こえた。感心はしてないけど。",
+        "だめ。三点リーダーは私の仕事。",
+        "言葉をくれるまで、質問はここにいるよ。",
+      ],
+      hints: [
+        "ろうそくが画面に身を寄せる",
+        "キーの下で何かが耳を澄ます",
+        "hexがノイズの中を探っている",
+        "カーソルが息をひそめる",
+        "虚無がその言葉を噛みしめる",
+      ],
+    }
+  }
+  if language == "ko" {
+    return {
+      locale: "ko",
+      language: "Korean",
+      intro: [
+        "채팅창이 깜빡이며 켜진다.",
+        "커서가 깜빡인다.",
+        "네 맥박을 세는 것처럼.",
+        "답할 때마다 심지가 타들어 간다.",
+      ],
+      greeting:
+        "어. 안녕. 네가 날 불렀어, 내가 널 불렀어? 뭐든, 메시지 20개면 촛불은 꺼져. 네가 먼저 말해.",
+      quit_help: "(일찍 나가려면 /quit 입력)",
+      disconnected: "[연결이 끊긴다]",
+      goodbye: "그래, 잘 가. 촛불이 질투하네.",
+      nothing: "(아직 대화하지 않아서 밝힐 게 없다)",
+      end_title: "촛불이 꺼진다.",
+      reveal: "hex의 수첩이 탁자 위에 펼쳐진다. 그녀의 필체다.",
+      empty: "[촛불이 흔들린다. 답은 없다]",
+      you: "너",
+      blanks: [
+        "좋은 시도네. 침묵은 안 쳐 줘.",
+        "빈 제물은 거절이야. 그릇에 생각 하나 넣어.",
+        "공허도 들었어. 감흥은 없었대.",
+        "안 돼. 말줄임표는 내 담당이야.",
+        "말을 먹여 줄 때까지 질문은 여기 있어.",
+      ],
+      hints: [
+        "촛불이 화면 쪽으로 기운다",
+        "키 아래 무언가가 귀를 기울인다",
+        "hex가 잡음 속을 뒤진다",
+        "커서가 숨을 죽인다",
+        "공허가 그 말을 곱씹는다",
+      ],
+    }
+  }
+  if language == "zh" {
+    return {
+      locale: "zh-Hans",
+      language: "Simplified Chinese",
+      intro: [
+        "聊天窗口闪烁着亮了。",
+        "光标一闪一闪，",
+        "仿佛在数你的脉搏。",
+        "每次回答，都烧掉一截烛芯。",
+      ],
+      greeting: "哦。嗨。是你召唤了我，还是我召唤了你？反正，20条消息之后蜡烛就灭了。你先说。",
+      quit_help: "（输入 /quit 提前退出）",
+      disconnected: "［连接断了］",
+      goodbye: "行，拜拜。蜡烛吃醋了。",
+      nothing: "（还没聊过，没什么可揭晓的）",
+      end_title: "蜡烛熄灭了。",
+      reveal: "hex的笔记本在桌上摊开。是她的字迹。",
+      empty: "［烛火摇曳，没有回应］",
+      you: "你",
+      blanks: [
+        "想得美。沉默可不算数。",
+        "空的祭品不收。往碗里放个念头。",
+        "虚空听到了。它无动于衷。",
+        "不行。省略号归我管。",
+        "不给它喂点话，这个问题就赖着不走。",
+      ],
+      hints: [
+        "烛火向屏幕倾斜",
+        "键盘下面有什么在听",
+        "hex在杂音里翻找",
+        "光标屏住了呼吸",
+        "虚空在咀嚼这句话",
+      ],
+    }
+  }
+  return english_copy()
+}
+
+pub fn locale_from_env(env: HarnessEnv) -> GameCopy {
+  for name in ["TWENTY_EQ_LOCALE", "LC_ALL", "LC_MESSAGES", "LANG"] {
+    const value = trim(env.get(name) ?? "")
+    if value != "" {
+      return game_copy(value)
+    }
+  }
+  return english_copy()
+}
