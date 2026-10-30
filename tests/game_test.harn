@@ -90,6 +90,11 @@ pipeline test_locale_catalogs_reach_every_terminal_copy_path() {
   }
   assert_eq(game_copy("FR_fr.UTF-8@euro").locale, "fr")
   assert_eq(game_copy("ja.UTF-8").locale, "ja")
+  assert_eq(game_copy("zh_CN.UTF-8").locale, "zh-Hans")
+  assert_eq(game_copy("zh-Hans").locale, "zh-Hans")
+  assert_eq(game_copy("zh-Hant").locale, "en")
+  assert_eq(game_copy("zh_TW.UTF-8").locale, "en")
+  assert_eq(game_copy("zh-HK").locale, "en")
   assert_eq(game_copy("C").locale, "en")
   assert_eq(game_copy("unsupported").locale, "en")
 }
