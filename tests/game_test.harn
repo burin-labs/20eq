@@ -99,6 +99,37 @@ pipeline test_locale_catalogs_reach_every_terminal_copy_path() {
   assert_eq(game_copy("unsupported").locale, "en")
 }
 
+pipeline test_chinese_script_precedes_region_and_ignores_extensions() {
+  for locale in [
+    "zh-Hans-TW",
+    "zh-Hans-HK",
+    "zh-Hans-MO",
+    "ZH_hans_TW.UTF-8@euro",
+    "zh-CN-u-hant",
+    "zh-x-hant-tw",
+    "zh-Hans-TW-u-hant",
+  ] {
+    const copy = game_copy(locale)
+    assert_eq(copy.locale, "zh-Hans")
+    assert_eq(copy.greeting, game_copy("zh-Hans").greeting)
+    assert_eq(turn_label(0, copy), "${copy.you} (1/${MAX_TURNS}) > ")
+  }
+  for locale in [
+    "zh-Hant-CN",
+    "zh-Hant-SG",
+    "zh-TW-u-hans",
+    "zh-HK-x-hans",
+    "zh-MO",
+    "zh-Latn-TW",
+    "zh-Latn-CN",
+    "zh-Latn",
+  ] {
+    const copy = game_copy(locale)
+    assert_eq(copy.locale, "en")
+    assert_eq(copy.greeting, game_copy("en").greeting)
+  }
+}
+
 pipeline test_default_model_route_is_local(harness: Harness) {
   const options = hex_options(harness.env, {temperature: 0.4})
   assert_eq(options.provider, "local")

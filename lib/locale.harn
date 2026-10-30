@@ -54,13 +54,30 @@ pub fn english_copy() -> GameCopy {
 
 /** Resolve a POSIX or BCP 47 locale once before the terminal loop. */
 pub fn game_copy(raw_locale: string) -> GameCopy {
-  const base = split(split(raw_locale, ".")[0] ?? "en", "@")[0] ?? "en"
+  const base = split(split(raw_locale.trim(), ".")[0] ?? "en", "@")[0] ?? "en"
   const parts = split(replace(base, "_", "-").lower(), "-")
   const language = parts[0] ?? "en"
-  if language == "zh"
-    && (parts.contains("hant") || parts.contains("tw") || parts.contains("hk")
-      || parts.contains("mo")) {
-    return english_copy()
+  if language == "zh" {
+    let script: string? = nil
+    let region: string? = nil
+    for part in parts[1:len(parts)] {
+      if len(part) == 1 {
+        break
+      }
+      if script == nil && region == nil && regex_match("^[a-z]{4}$", part) != nil {
+        script = part
+      } else if region == nil && regex_match("^([a-z]{2}|[0-9]{3})$", part) != nil {
+        region = part
+      }
+    }
+    const simplified = if script != nil {
+      script == "hans"
+    } else {
+      !["tw", "hk", "mo"].contains(region ?? "")
+    }
+    if !simplified {
+      return english_copy()
+    }
   }
   if language == "es" {
     return {
