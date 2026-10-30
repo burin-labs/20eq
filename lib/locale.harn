@@ -55,7 +55,13 @@ pub fn english_copy() -> GameCopy {
 /** Resolve a POSIX or BCP 47 locale once before the terminal loop. */
 pub fn game_copy(raw_locale: string) -> GameCopy {
   const base = split(split(raw_locale, ".")[0] ?? "en", "@")[0] ?? "en"
-  const language = (split(replace(base, "_", "-"), "-")[0] ?? "en").lower()
+  const parts = split(replace(base, "_", "-").lower(), "-")
+  const language = parts[0] ?? "en"
+  if language == "zh"
+    && (parts.contains("hant") || parts.contains("tw") || parts.contains("hk")
+      || parts.contains("mo")) {
+    return english_copy()
+  }
   if language == "es" {
     return {
       locale: "es",
