@@ -1,0 +1,149 @@
+import { GameCopy } from "./copy.harn"
+
+pub fn russian_copy() -> GameCopy {
+  return {
+    locale: "ru",
+    language: "Russian",
+    intro: [
+      "окно чата мерцает и загорается.",
+      "курсор мигает, будто",
+      "считает твой пульс.",
+      "каждый ответ сжигает фитиль.",
+    ],
+    greeting:
+      "о. привет. это ты меня вызвал или я тебя? в любом случае, 20 сообщений, и свеча погаснет. начинай.",
+    quit_help: "(введи /quit, чтобы уйти раньше)",
+    disconnected: "[связь обрывается]",
+    goodbye: "ладно, пока. свеча ревнует.",
+    nothing: "(разговор ещё не начался; раскрывать нечего)",
+    end_title: "свеча гаснет.",
+    reveal: "блокнот hex раскрывается на столе. это её почерк.",
+    empty: "[свеча чадит; ответа нет]",
+    you: "ты",
+    blanks: [
+      "хорошая попытка. свеча не считает молчание.",
+      "пустое подношение не принято. положи мысль в чашу.",
+      "пустота тебя услышала. впечатления не произвело.",
+      "нет. многоточия здесь ставлю я.",
+      "вопрос останется, пока ты не накормишь его словами.",
+    ],
+    hints: [
+      "свеча склоняется к экрану",
+      "под клавишами что-то прислушивается",
+      "hex копается в помехах",
+      "курсор затаил дыхание",
+      "пустота пережёвывает твои слова",
+    ],
+  }
+}
+
+pub fn ukrainian_copy() -> GameCopy {
+  return {
+    locale: "uk",
+    language: "Ukrainian",
+    intro: [
+      "вікно чату мерехтить і спалахує.",
+      "курсор блимає, наче",
+      "лічить твій пульс.",
+      "кожна відповідь спалює ґніт.",
+    ],
+    greeting:
+      "о. привіт. це ти мене викликав чи я тебе? хай там як, 20 повідомлень, і свічка згасне. починай.",
+    quit_help: "(введи /quit, щоб піти раніше)",
+    disconnected: "[зв’язок обривається]",
+    goodbye: "гаразд, бувай. свічка ревнує.",
+    nothing: "(розмова ще не почалася; розкривати нічого)",
+    end_title: "свічка гасне.",
+    reveal: "блокнот hex розгортається на столі. це її почерк.",
+    empty: "[свічка чадить; відповіді немає]",
+    you: "ти",
+    blanks: [
+      "гарна спроба. свічка не рахує мовчання.",
+      "порожню пожертву відхилено. поклади думку в чашу.",
+      "порожнеча тебе почула. враження не справило.",
+      "ні. три крапки тут ставлю я.",
+      "питання залишиться, доки не нагодуєш його словами.",
+    ],
+    hints: [
+      "свічка схиляється до екрана",
+      "під клавішами щось прислухається",
+      "hex порпається в перешкодах",
+      "курсор затамував подих",
+      "порожнеча пережовує твої слова",
+    ],
+  }
+}
+
+pub fn polish_copy() -> GameCopy {
+  return {
+    locale: "pl",
+    language: "Polish",
+    intro: [
+      "okno czatu zapala się, migocząc.",
+      "kursor mruga, jakby",
+      "liczył twój puls.",
+      "każda odpowiedź wypala knot.",
+    ],
+    greeting:
+      "o. cześć. to ty mnie przywołujesz czy ja ciebie? tak czy inaczej, 20 wiadomości i świeca gaśnie. zaczynaj.",
+    quit_help: "(wpisz /quit, żeby wyjść wcześniej)",
+    disconnected: "[połączenie się urywa]",
+    goodbye: "dobra, pa. świeca jest zazdrosna.",
+    nothing: "(rozmowa jeszcze się nie zaczęła; nie ma czego ujawniać)",
+    end_title: "świeca gaśnie.",
+    reveal: "notes hex otwiera się na stole. to jej pismo.",
+    empty: "[świeca przygasa; brak odpowiedzi]",
+    you: "ty",
+    blanks: [
+      "niezła próba. świeca nie liczy milczenia.",
+      "pusta ofiara odrzucona. włóż myśl do miski.",
+      "pustka to słyszała. nie zrobiło to na niej wrażenia.",
+      "nie. wielokropki to moja działka.",
+      "pytanie zostaje, dopóki nie nakarmisz go słowami.",
+    ],
+    hints: [
+      "świeca pochyla się ku ekranowi",
+      "coś pod klawiszami nasłuchuje",
+      "hex grzebie w szumie",
+      "kursor wstrzymuje oddech",
+      "pustka przeżuwa twoje słowa",
+    ],
+  }
+}
+
+pub fn dutch_copy() -> GameCopy {
+  return {
+    locale: "nl",
+    language: "Dutch",
+    intro: [
+      "het chatvenster flikkert aan.",
+      "de cursor knippert alsof hij",
+      "je hartslag telt.",
+      "elk antwoord brandt de lont verder op.",
+    ],
+    greeting:
+      "o. hoi. heb jij mij opgeroepen of ik jou? hoe dan ook, 20 berichten en dan gaat de kaars uit. jij begint.",
+    quit_help: "(typ /quit om eerder te vertrekken)",
+    disconnected: "[de verbinding valt weg]",
+    goodbye: "oké, doei. de kaars is jaloers.",
+    nothing: "(nog geen gesprek gevoerd; niets te onthullen)",
+    end_title: "de kaars gaat uit.",
+    reveal: "het notitieboek van hex valt open op tafel. het is haar handschrift.",
+    empty: "[de kaars flakkert; er komt geen antwoord]",
+    you: "jij",
+    blanks: [
+      "leuk geprobeerd. de kaars telt stilte niet mee.",
+      "leeg offer geweigerd. leg een gedachte in de kom.",
+      "de leegte hoorde dat. het maakte geen indruk.",
+      "nee. beletseltekens zijn mijn werk.",
+      "de vraag blijft staan tot je haar woorden voert.",
+    ],
+    hints: [
+      "de kaars buigt naar het scherm",
+      "iets onder de toetsen luistert",
+      "hex rommelt in de ruis",
+      "de cursor houdt zijn adem in",
+      "de leegte kauwt op je woorden",
+    ],
+  }
+}

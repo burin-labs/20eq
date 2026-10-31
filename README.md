@@ -9,15 +9,16 @@ Written in [Harn](https://harnlang.com).
 ## Language
 
 The game supports English, Spanish, French, German, Brazilian Portuguese,
-Italian, Japanese, Korean, and Simplified Chinese. It uses `LC_ALL`,
+Italian, Japanese, Korean, Simplified Chinese, Russian, Ukrainian, Polish,
+and Dutch. It uses `LC_ALL`,
 `LC_MESSAGES`, then `LANG`. Set `TWENTY_EQ_LOCALE` to override that choice:
 
 ```sh
 TWENTY_EQ_LOCALE=ja harn run 20eq.harn
 ```
 
-Locale codes are `en`, `es`, `fr`, `de`, `pt-BR`, `it`, `ja`, `ko`, and
-`zh-Hans`. POSIX locale names such as `fr_FR.UTF-8` work too. Unsupported
+Locale codes are `en`, `es`, `fr`, `de`, `pt-BR`, `it`, `ja`, `ko`,
+`zh-Hans`, `ru`, `uk`, `pl`, and `nl`. POSIX locale names such as `fr_FR.UTF-8` work too. Unsupported
 languages use English. `/quit` and `/exit` stay the same in every language.
 Terminal text is translated locally; the model is instructed to use the chosen
 language for its dialogue and final reveal.
@@ -29,10 +30,10 @@ You need two things on your machine:
 **1. The Harn toolchain.** Install the exact version in `.harn-version` from crates.io:
 
 ```sh
-cargo install harn-cli --version 0.10.131 --locked
+cargo install harn-cli --version 0.10.182 --locked
 ```
 
-That puts a `harn` binary in `~/.cargo/bin/`. Run `harn --version` to confirm it reports `harn 0.10.131`.
+That puts a `harn` binary in `~/.cargo/bin/`. Run `harn --version` to confirm it reports `harn 0.10.182`.
 
 **2. A local OpenAI-compatible chat server with a model loaded.** Harn discovers common local servers automatically. Set `LOCAL_LLM_BASE_URL` when yours uses a non-default address, and give it the server root without the `/v1` suffix, which Harn appends itself (`http://127.0.0.1:8001`, not `http://127.0.0.1:8001/v1`). The game defaults to `local:qwen3.6-35b-a3b-ud-q4-k-xl`; override it without editing source by setting `TWENTY_EQ_MODEL` to any Harn model id, such as `ollama:qwen3.5:9b`.
 
@@ -50,7 +51,10 @@ Type `/quit` to bail early; otherwise the candle goes out on its own after 20 tu
 
 - `20eq.harn` — the terminal game and character prompt; `pub fn main(harness: Harness)` is the entry point
 - `lib/game.harn` — deterministic turn policy, model routing, and private-text boundary
-- `tests/game_test.harn` — six fast in-process cases with no model call and no wall clock
+- `lib/locale.harn` — language selection and terminal copy
+- `lib/copy.harn` — the shared terminal copy contract
+- `lib/european-copy.harn` — Russian, Ukrainian, Polish, and Dutch copy
+- `tests/game_test.harn` — deterministic policy and mock-stream checks
 - `harn.toml` — Harn package manifest, including the supported Harn range
 - `.harn-version` — the exact Harn toolchain this repository is verified against
 - `.github/workflows/ci.yml` — package and test verification
@@ -68,7 +72,7 @@ harn test tests/ --parallel
 harn package check
 ```
 
-`harn test` takes one positional target, so run the suite as `harn test tests/`. The six cases are all deterministic: the streaming case uses `harness.llm.mock_enqueue`, and nothing else reaches a model.
+`harn test` takes one positional target, so run the suite as `harn test tests/`. The cases are deterministic: streaming checks use `harness.llm.mock_enqueue`, and nothing reaches a live model.
 
 No Git hook is required. Editors and agents can format with `harn fmt`, while CI remains the authoritative gate.
 

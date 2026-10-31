@@ -75,7 +75,7 @@ pipeline test_turn_labels_use_human_numbering() {
 }
 
 pipeline test_locale_catalogs_reach_every_terminal_copy_path() {
-  for locale in ["es", "fr", "de", "pt-BR", "it", "ja", "ko", "zh-Hans"] {
+  for locale in ["es", "fr", "de", "pt-BR", "it", "ja", "ko", "zh-Hans", "ru", "uk", "pl", "nl"] {
     const copy = game_copy(locale)
     assert_eq(copy.locale, locale)
     assert_eq(len(copy.intro), 4)
@@ -90,6 +90,10 @@ pipeline test_locale_catalogs_reach_every_terminal_copy_path() {
   }
   assert_eq(game_copy("FR_fr.UTF-8@euro").locale, "fr")
   assert_eq(game_copy("ja.UTF-8").locale, "ja")
+  assert_eq(game_copy("ru_RU.UTF-8").locale, "ru")
+  assert_eq(game_copy("uk-UA").locale, "uk")
+  assert_eq(game_copy("pl_PL.UTF-8").locale, "pl")
+  assert_eq(game_copy("nl-BE").locale, "nl")
   assert_eq(game_copy("zh_CN.UTF-8").locale, "zh-Hans")
   assert_eq(game_copy("zh-Hans").locale, "zh-Hans")
   assert_eq(game_copy("zh-Hant").locale, "en")
