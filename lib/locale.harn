@@ -1,19 +1,5 @@
-pub type GameCopy = {
-  locale: string,
-  language: string,
-  intro: list<string>,
-  greeting: string,
-  quit_help: string,
-  disconnected: string,
-  goodbye: string,
-  nothing: string,
-  end_title: string,
-  reveal: string,
-  empty: string,
-  you: string,
-  blanks: list<string>,
-  hints: list<string>,
-}
+pub import { GameCopy } from "./copy.harn"
+import { dutch_copy, polish_copy, russian_copy, ukrainian_copy } from "./european-copy.harn"
 
 pub fn english_copy() -> GameCopy {
   return {
@@ -57,6 +43,18 @@ pub fn game_copy(raw_locale: string) -> GameCopy {
   const base = split(split(raw_locale.trim(), ".")[0] ?? "en", "@")[0] ?? "en"
   const parts = split(replace(base, "_", "-").lower(), "-")
   const language = parts[0] ?? "en"
+  if language == "ru" {
+    return russian_copy()
+  }
+  if language == "uk" {
+    return ukrainian_copy()
+  }
+  if language == "pl" {
+    return polish_copy()
+  }
+  if language == "nl" {
+    return dutch_copy()
+  }
   if language == "zh" {
     let script: string? = nil
     let region: string? = nil

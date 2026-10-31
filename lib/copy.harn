@@ -1,0 +1,16 @@
+pub type GameCopy = {
+  locale: string,
+  language: string,
+  intro: list<string>,
+  greeting: string,
+  quit_help: string,
+  disconnected: string,
+  goodbye: string,
+  nothing: string,
+  end_title: string,
+  reveal: string,
+  empty: string,
+  you: string,
+  blanks: list<string>,
+  hints: list<string>,
+}
