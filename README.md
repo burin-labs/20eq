@@ -30,10 +30,10 @@ You need two things on your machine:
 **1. The Harn toolchain.** Install the exact version in `.harn-version` from crates.io:
 
 ```sh
-cargo install harn-cli --version 0.10.131 --locked
+cargo install harn-cli --version 0.10.182 --locked
 ```
 
-That puts a `harn` binary in `~/.cargo/bin/`. Run `harn --version` to confirm it reports `harn 0.10.131`.
+That puts a `harn` binary in `~/.cargo/bin/`. Run `harn --version` to confirm it reports `harn 0.10.182`.
 
 **2. A local OpenAI-compatible chat server with a model loaded.** Harn discovers common local servers automatically. Set `LOCAL_LLM_BASE_URL` when yours uses a non-default address, and give it the server root without the `/v1` suffix, which Harn appends itself (`http://127.0.0.1:8001`, not `http://127.0.0.1:8001/v1`). The game defaults to `local:qwen3.6-35b-a3b-ud-q4-k-xl`; override it without editing source by setting `TWENTY_EQ_MODEL` to any Harn model id, such as `ollama:qwen3.5:9b`.
 

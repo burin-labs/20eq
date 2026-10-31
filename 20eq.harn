@@ -151,7 +151,7 @@ pub fn main(harness: Harness) {
   harness.stdio.println("")
   harness.stdio.println(dim(copy.quit_help))
   harness.stdio.println("")
-  const messages = []
+  let messages = []
   let actual_turns = 0
   while actual_turns < MAX_TURNS {
     harness.stdio.print(color(turn_label(actual_turns, copy), "cyan"))
